@@ -1,13 +1,14 @@
 import asyncio
 from .config import Config
 from .router import Router, Param
-from .server import serve
 from .protocol import HttpProtocol
 
 try:
     import uvloop
 except:
     uvloop = asyncio
+
+__version__ = "0.0.1"
 
 
 class Misuzu(object):
