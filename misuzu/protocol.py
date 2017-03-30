@@ -18,6 +18,7 @@ class HttpProtocol(asyncio.Protocol):
         self.url = None
         self.headers = None
         self.router = router
+        self.__body = []
 
     def connection_made(self, transport):
         """
@@ -34,6 +35,7 @@ class HttpProtocol(asyncio.Protocol):
         :return:
         """
         self.request = self.parser = None
+        self.__body = []
 
     # -------------------------------------------- #
     # Parsing
@@ -61,7 +63,6 @@ class HttpProtocol(asyncio.Protocol):
         """
         self.url = url
 
-
     def on_header(self, key, value):
         """
         HttpRequestParser 解析函数
@@ -80,17 +81,18 @@ class HttpProtocol(asyncio.Protocol):
         url = httptools.parse_url(self.url)
         self.request = Request(
             url=url.path,
-            headers=dict(self.headers),
+            headers=self.headers,
             version=self.parser.get_http_version(),
             method=self.parser.get_method(),
             query=url.query
         )
 
     def on_body(self, body):
-        pprint(body)
-        self.request.body.append(body)
+        self.__body.append(body)
 
     def on_message_complete(self):
+
+        self.request.init_body(b''.join(self.__body))
         # 调用处理函数
         self.loop.create_task(self.process(self.request))
     # -------------------------------------------- #

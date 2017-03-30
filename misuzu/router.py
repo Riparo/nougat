@@ -108,7 +108,7 @@ class Param:
     def __init__(self, name, type, location=None, optional=False, default=None, action=None, append=False, description=None):
         self.name = name  # name
         self.type = type  # type or [type, type]
-        self.location = location  # cookies, query, body, headers
+        self.location = location  # cookies, query, form, headers
         self.optional = optional  # true, false
         self.default = default  # if optional is true
         self.action = action  # rename
