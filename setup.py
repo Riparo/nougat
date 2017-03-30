@@ -39,7 +39,7 @@ try:
     setup_kwargs['install_requires'] = normal_requirements
     setup(**setup_kwargs)
 
-except:
+except DistutilsPlatformError as exception:
     windows_requirements = [
         'httptools>=0.0.9',
     ]
