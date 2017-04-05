@@ -8,18 +8,16 @@
 <body>
   <nav>
     <a href="#/">English</a>
-    <a href="#/zh-cn/">中文</a>
+    <a href="#/zh-cn/">中 文</a>
   </nav>
   <div id="app"></div>
 </body>
 <script>
-  if (typeof navigator.serviceWorker !== 'undefined') {
-    navigator.serviceWorker.register('sw.js')
-  }
   window.$docsify = {
     loadSidebar: true,
     subMaxLevel: 3
   }
 </script>
 <script src="statics/docsify.min.js"></script>
+<script src="statics/prim-python.min.js"></script>
 </html>
