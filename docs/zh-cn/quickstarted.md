@@ -63,7 +63,7 @@ misuzu 提供了 `abort` 来返回自定义 HTTP CODE
 內部提供了三个常用的响应函数 `text`, `html`, `json`。 其对应的设定如下：
  - `text` 默认设置 `content_type` 为 `text/plain; charset=utf-8`
  - `html` 默认设置 `content_type` 为 `text/html; charset=utf-8`
- - `json` 默认设置 `content_type` 为 `application/json`
+ - `json` 默认设置 `content_type` 为 `application/json`, 并且调用`json.dumps`方法对`body` 进行格式化
 
 有了这几个常用的函数，就可以直接在处理函数中 `return json(body)` 即可完成返回
 
