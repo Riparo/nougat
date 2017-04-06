@@ -120,7 +120,7 @@ class HttpProtocol(asyncio.Protocol):
         if asyncio.iscoroutinefunction(handler):
             result = await handler(request)
         else:
-            result = handler()
+            result = handler(request)
 
         self.write_response(result)
 
