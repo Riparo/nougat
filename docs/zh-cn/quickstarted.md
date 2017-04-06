@@ -52,6 +52,14 @@ lalalal
  TODO
 ## 请求类
 
-## 回应类
+## 响应类
 
+內部提供了三个常用的响应函数 `text`, `html`, `json`。 其对应的设定如下：
+ - `text` 默认设置 `content_type` 为 `text/plain; charset=utf-8`
+ - `html` 默认设置 `content_type` 为 `text/html; charset=utf-8`
+ - `json` 默认设置 `content_type` 为 `application/json`
+
+有了这几个常用的函数，就可以直接在处理函数中 `return json(body)` 即可完成返回
+
+若需要返回其他类型的响应，可以引入 `Response` 类，直接设定 `Response` 的返回内容
 ## 使用 nginx 部署
