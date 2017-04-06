@@ -1,4 +1,4 @@
-from .exceptions import HTTPException
+from .exceptions import HttpException
 
 
 __all__ = ()
@@ -11,5 +11,5 @@ STATUS_CODES = {
 def abort(status, body=None):
     if not body:
         body = STATUS_CODES.get(status, "User Definition Code")
-    raise HTTPException(body, status)
+    raise HttpException(body, status)
 

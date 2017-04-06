@@ -2,7 +2,7 @@ import asyncio
 import httptools
 from .request import Request
 from .response import Response, json
-from .exceptions import HTTPException
+from .exceptions import HttpException
 from pprint import pprint
 from time import time
 
@@ -130,7 +130,7 @@ class HttpProtocol(asyncio.Protocol):
                 result = json(result)
             
             
-        except HTTPException as e:
+        except HttpException as e:
             result = Response(e.body, e.status)
         
         self.write_response(result)
