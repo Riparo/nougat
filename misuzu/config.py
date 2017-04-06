@@ -1,10 +1,3 @@
-
-STATUS_CODES = {
-    200: 'OK',
-    404: 'Not Found'
-}
-
-
 class Config(dict):
 
     def __init__(self, default=None):

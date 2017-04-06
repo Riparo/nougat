@@ -1,5 +1,5 @@
 from json import  dumps
-from .config import STATUS_CODES
+from .httpstatus import STATUS_CODES
 
 class Response:
     __slots__ = ('body', 'status', 'content_type')

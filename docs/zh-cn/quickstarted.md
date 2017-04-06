@@ -49,7 +49,12 @@ lalalal
 
 ## 重定向 和 HTTP 错误
 
- TODO
+### 如何返回自定义的 HTTP CODE
+misuzu 提供了 `abort` 来返回自定义 HTTP CODE
+
+`abort` 接受两个参数：
+ - `status` 是返回的 HTTP CODE
+ - `body` 是可选的，返回在页面中显示的内容。若不传入 `body` 则在常用的 HTTP CODE 中寻找对应的文字，例如 `404` 对应 `Not Found`。 对于那些不存在的，则返回 `User Definition Code`
 ## 请求类
 
 ## 响应类

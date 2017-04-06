@@ -2,6 +2,7 @@ import asyncio
 import httptools
 from .request import Request
 from .response import Response, json
+from .exceptions import HTTPException
 from pprint import pprint
 from time import time
 
@@ -118,18 +119,21 @@ class HttpProtocol(asyncio.Protocol):
         route = self.router.get(request.url, request.method)
         request.generate_params(route.params)
         handler = route.handler
-        
-        if asyncio.iscoroutinefunction(handler):
-            result = await handler(request)
-        else:
-            result = handler(request)
-        
-        # if not return Response's instance, then json it
-        if not isinstance(result, Response):
-            result = json(result)
+        try:
+            if asyncio.iscoroutinefunction(handler):
+                result = await handler(request)
+            else:
+                result = handler(request)
+            
+            # if not return Response's instance, then json it
+            if not isinstance(result, Response):
+                result = json(result)
+            
+            
+        except HTTPException as e:
+            result = Response(e.body, e.status)
         
         self.write_response(result)
-
     def write_response(self, response):
         """
         把 Response 类中的内容写入 self.transport 中
