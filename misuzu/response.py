@@ -38,4 +38,4 @@ def html(body):
     return Response(body=body, content_type='text/html; charset=utf-8')
 
 def json(body):
-    return Response(body=body, content_type='application/json')
+    return Response(body=dumps(body), content_type='application/json')
