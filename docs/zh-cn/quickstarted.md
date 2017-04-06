@@ -62,4 +62,16 @@ lalalal
 有了这几个常用的函数，就可以直接在处理函数中 `return json(body)` 即可完成返回
 
 若需要返回其他类型的响应，可以引入 `Response` 类，直接设定 `Response` 的返回内容
+
+### 更好的 JSON 的返回
+对于 JSON 的返回内容， misuzu 提供了另外一种更加简便的返回方式
+```python
+@app.get("/")
+async def index(request):
+    return {"hello":"world"}
+```
+如上述代码，你可以直接返回 `dict` 或 `list` 类型的内容。
+
+misuzu 在处理返回值时，会判断返回值是否`Response`的实例，若不是，将会调用上述描述的 `json` 进行格式化返回值
+
 ## 使用 nginx 部署
