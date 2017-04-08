@@ -2,6 +2,7 @@ import asyncio
 from .config import Config
 from .router import Router, Param
 from .protocol import HttpProtocol
+from .test_client import TestClient
 
 try:
     import uvloop
@@ -19,6 +20,7 @@ class Misuzu(object):
         :param name: APP 名称， 并没有什么用
         """
         self.name = name
+        self.__test_client = None
         self.router = Router()
 
         self.__temper_params = []
@@ -62,9 +64,9 @@ class Misuzu(object):
 
         return self.__route(url, "PATCH")
 
-    def run(self, host="127.0.0.1", port=8000, debug=False):
+    def run(self, host="127.0.0.1", port=8000, debug=False, loop=None):
         # Create Event Loop
-        loop = uvloop.new_event_loop()
+        loop = loop or uvloop.new_event_loop()
         asyncio.set_event_loop(loop)
         loop.set_debug(debug)
 
@@ -77,6 +79,16 @@ class Misuzu(object):
             print("ctrl+c")
             server_loop.close()
             loop.close()
+
+    def stop(self):
+        asyncio.get_event_loop().stop()
+
+    @property
+    def test(self):
+        if not self.__test_client:
+            return TestClient(self)
+        return self.__test_client
+
 
     def param(self,  name, type, location='query', optional=False, default=None, action=None, append=False, description=None):
         """
