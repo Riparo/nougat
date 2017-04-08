@@ -78,7 +78,7 @@ class Misuzu(object):
             server_loop.close()
             loop.close()
 
-    def param(self,  name, type, location=None, optional=False, default=None, action=None, append=False, description=None):
+    def param(self,  name, type, location='query', optional=False, default=None, action=None, append=False, description=None):
         """
         为路由添加参数
         :param name: 参数名称
