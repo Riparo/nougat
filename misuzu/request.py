@@ -7,6 +7,9 @@ class RequestParams(object):
     def __setattr__(self, key, value):
         super().__setattr__(key, value)
 
+    def __format_attr(self, attr_type, value):
+        pass
+
 
 class Request:
     """
@@ -120,13 +123,18 @@ class Request:
 
         return ret
 
-    def generate_params(self, params):
+    def generate_params(self, route):
         """
         格式化参数
-        :param params:
+        :param route:
         :return:
         """
-        for param in params:
+        for param in route.params:
+
+            if param.name in route.url_dict:
+                self.params.__setattr__(param.name, route.url_dict[param.name])
+                continue
+
             for location in param.location:
                 # pprint("{} {} {}", location, param.name, param.append)
                 param_name = param.action or param.name

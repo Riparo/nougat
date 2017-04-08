@@ -59,7 +59,7 @@ class Router:
         if match:
             ret = rule
             for param in match:
-                ret = ret.replace(param[0], "([^/]+)")
+                ret = ret.replace(param[0], "(?P<{}>[^/]+)".format(param[1]))
             return True, ret
 
         return False, rule
@@ -150,11 +150,13 @@ class DynamicRoute(Route):
         self.handler = handler
         self.pattern = re.compile(pattern)
         self.params = []
+        self.url_dict = {}
 
     def match(self, url):
         match = self.pattern.match(url)
         if match:
-            if match.end() == len(url):
+            if match.pos == 0 and match.endpos == len(url):
+                self.url_dict = match.groupdict()
                 return match
 
         return None

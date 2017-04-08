@@ -117,7 +117,7 @@ class HttpProtocol(asyncio.Protocol):
         pprint("url {}".format(request.url.decode('utf-8')))
 
         route = self.router.get(request.url, request.method)
-        request.generate_params(route.params)
+        request.generate_params(route)
         handler = route.handler
         try:
             if asyncio.iscoroutinefunction(handler):
@@ -128,9 +128,9 @@ class HttpProtocol(asyncio.Protocol):
             # if not return Response's instance, then json it
             if not isinstance(result, Response):
                 result = json(result)
-            
-            
+
         except HttpException as e:
+
             result = Response(e.body, e.status)
         
         self.write_response(result)
