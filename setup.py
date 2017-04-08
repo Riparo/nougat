@@ -1,6 +1,7 @@
-from setuptools import setup, find_packages
+from setuptools import setup
 from os import path
 from misuzu import __version__
+from distutils.errors import DistutilsPlatformError
 
 here = path.abspath(path.dirname(__file__))
 
