@@ -31,11 +31,14 @@ class Response:
             body
         ])
 
+
 def text(body):
     return Response(body=body, content_type='text/plain; charset=utf-8')
 
+
 def html(body):
     return Response(body=body, content_type='text/html; charset=utf-8')
+
 
 def json(body):
     return Response(body=dumps(body), content_type='application/json')

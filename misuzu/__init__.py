@@ -82,7 +82,7 @@ class Misuzu(object):
         """
         为路由添加参数
         :param name: 参数名称
-        :param param_type:参数类型
+        :param type:参数类型
         :param location: 参数来源
         :param optional: 参数是否可选
         :param default: 参数默认值，仅当 optional 为 True 时有效

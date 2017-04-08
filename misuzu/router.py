@@ -64,7 +64,8 @@ class Router:
 
         return False, rule
 
-    async def __default(self, request):
+    @staticmethod
+    async def __default(request):
         """
         默认路由，当找不到匹配项时触发
         :return:

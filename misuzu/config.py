@@ -13,5 +13,3 @@ class Config(dict):
         self[key] = value
 
     # TODO load config from file and object
-
-

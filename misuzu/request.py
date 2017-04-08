@@ -1,6 +1,4 @@
-from pprint import pprint
-from urllib.parse import parse_qs, parse_qsl
-import cgi
+from urllib.parse import parse_qsl
 import json
 
 

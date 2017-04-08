@@ -134,6 +134,7 @@ class HttpProtocol(asyncio.Protocol):
             result = Response(e.body, e.status)
         
         self.write_response(result)
+
     def write_response(self, response):
         """
         把 Response 类中的内容写入 self.transport 中
