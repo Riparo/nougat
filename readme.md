@@ -15,14 +15,21 @@ uvloop, which is the basemen of misuzu for providing fast async event loop, is l
 
 ```python
 from misuzu import Misuzu
-from misuzu.response import Response
+
 app = Misuzu(__name__)
 
-@app.get("/")
-async def test(request):
-    return Response("hello world.", content_type="text/html")
+
+@app.get('/<name>')
+@app.param('name', str)
+async def index(request):
+
+    return {
+        'hello': request.params.name
+    }
+
 
 app.run()
+
 ```
 
 ## Document

@@ -10,14 +10,21 @@ Misuzu 使用了uvloop 作为底层的异步实现，相比于标准库中的 as
 ## HELLO WORLD
 ```python
 from misuzu import Misuzu
-from misuzu.response import Response
+
 app = Misuzu(__name__)
 
-@app.get("/")
-async def test(request):
-    return Response("hello world.", content_type="text/html")
+
+@app.get('/<name>')
+@app.param('name', str)
+async def index(request):
+
+    return {
+        'hello': request.params.name
+    }
+
 
 app.run()
+
 ```
 
 以上代码简单地显示出了 Misuzu 的代码组织模式，它看起来与 Flask 和 Sanic 极其相似的。是的，在使用 Misuzu 的时候，会大量地使用装饰器，因为这样会相当 Pythonic。

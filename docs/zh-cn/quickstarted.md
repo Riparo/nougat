@@ -14,15 +14,21 @@ pip install misuzu
 
 ```python
 from misuzu import Misuzu
-from misuzu.response import Response
+
 app = Misuzu(__name__)
 
-@app.get("/")
-@app.param('')
-async def test(request):
-    return Response("hello world.", content_type="text/html")
+
+@app.get('/<name>')
+@app.param('name', str)
+async def index(request):
+
+    return {
+        'hello': request.params.name
+    }
+
 
 app.run()
+
 ```
 
 ## 调试模式
@@ -78,6 +84,6 @@ async def index(request):
 ```
 如上述代码，你可以直接返回 `dict` 或 `list` 类型的内容。
 
-misuzu 在处理返回值时，会判断返回值是否`Response`的实例，若不是，将会调用上述描述的 `json` 进行格式化返回值
+misuzu 在处理返回值时，会判断返回值是否`Response`的实例，若不是，将会调用上述描述的 `json` 方法进行格式化返回值
 
 ## 使用 nginx 部署
