@@ -9,18 +9,12 @@ from misuzu import Misuzu
 
 app = Misuzu(__name__)
 
-
 @app.get('/<name>')
 @app.param('name', str)
 async def index(request):
-
-    return {
-        'hello': request.params.name
-    }
-
+    return {'hello': request.params.name}
 
 app.run()
-
 ```
 
 # Debug Mode

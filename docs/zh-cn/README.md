@@ -13,18 +13,12 @@ from misuzu import Misuzu
 
 app = Misuzu(__name__)
 
-
 @app.get('/<name>')
 @app.param('name', str)
 async def index(request):
-
-    return {
-        'hello': request.params.name
-    }
-
+    return {'hello': request.params.name}
 
 app.run()
-
 ```
 
 以上代码简单地显示出了 Misuzu 的代码组织模式，它看起来与 Flask 和 Sanic 极其相似的。是的，在使用 Misuzu 的时候，会大量地使用装饰器，因为这样会相当 Pythonic。
