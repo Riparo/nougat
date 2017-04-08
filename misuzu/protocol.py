@@ -105,7 +105,8 @@ class HttpProtocol(asyncio.Protocol):
     # 处理函数
     async def process(self, request):
         """
-        路由处理流程
+        Middleware Process
+
                   request              request
         Middle ------------> Middle ------------> ... --->  Route
          Ware  <------------  ware  <------------ ... ---> Handler

@@ -138,5 +138,6 @@ class Request:
             for location in param.location:
                 # pprint("{} {} {}", location, param.name, param.append)
                 param_name = param.action or param.name
-                param_content = self.__get_msg(location, param.name, param.append)
+                param_content = self.__get_msg(location, param.name, param.append) or param.default
+
                 self.params.__setattr__(param_name, param_content)
