@@ -43,10 +43,35 @@ async def index_post(request):
     return text("hello world with post method")
 ```
 
-### 带变量的路由
-lalalal
-## 参数定义
+### 带参数的路由
+简单来说，不同于那些实用正则表达式作为路由项目的 web 框架来说，misuzu 提供了一个简单的路由定义方式，只需要在路由中以尖括号`<param_name>`括起来，然后使用`@app.param()`装饰器对该变量进行详细的描述即可。（当然，如果你只定义不使用该变量，那么不需要使用`@app.param()`描述该变量）
 
+以下是一个简单的例子（如同 HELLO WORLD）
+```python
+@app.get('/<name>')
+@app.param('name', str)
+async def index(request):
+    return {'hello': request.params.name}
+```
+以上例子，在 URL 中接受一个叫`name`的参数，并且尝试格式化为 `str` 类型，如果格式化成功（没有报异常），那么可以使用`request.params.name` (通用的是`request.params.param_name`) 得到参数内容。
+## 参数定义
+不同于其他 web 框架， misuzu 把参数的定义提到了 handler 前面，并且使用`@app.param()`装饰器语法来实现，这样可以：
+ - 逻辑代码和参数定义代码分离，更加清晰明了
+ - 代码更加 Pythonic
+
+`param()` 方法的使用方法是装饰在 handler 处理函数上的，其主要的参数有：
+ - `name` 参数名称。可以通过`request.params.name`来读取对应的函数
+ - `type` 参数类型。 需要传入一个 `callable` 的方法，支持 Python 内置的 `str`, `int`, `float`, `bool`
+ - `location` 参数来源。告知需要从哪里读取该参数。默认值为 `query` 即从 URL 的参数的读取。 可选值有 `query`, `form`, `header`, `cookie`。 允许从多个地方读取，即传入 list , e.g. `['query', 'form']`
+ - `optional` 参数是否可选。 默认值为 `False`
+ - `default` 参数默认值。 默认值为 `None`，当参数 `optional` 为 `True` 时， 默认值才会生效
+ - `action` 参数别名。默认值为 `None`，当设定该值时，参数的读取名字便改为 `request.params.action`
+ - `append` 参数是否可为列表。 默认值为 `False`， 当为 `True` 时，读取到的参数将以 `list` 的形式返回
+ - `description` 参数描述。 用于自动生成文档功能
+
+其中对于路由上的参数， `location` 将失效。原因是对于所有参数，都会先从路由中读取，若读取不到，再根据 `location` 读取。
+
+** `name` 和 `type` 是必须的，其他都是可选的。 **
 ## 重定向 和 HTTP 错误
 
 ### 如何返回自定义的 HTTP CODE
