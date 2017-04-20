@@ -3,6 +3,8 @@ from .config import Config
 from .router import Router, Param
 from .protocol import HttpProtocol
 from .test_client import TestClient
+from .middleware import BaseMiddleware
+from .exceptions import *
 
 try:
     import uvloop
@@ -22,6 +24,7 @@ class Misuzu(object):
         self.name = name
         self.__test_client = None
         self.router = Router()
+        self.chains = []
 
         self.__temper_params = []
 
@@ -70,7 +73,7 @@ class Misuzu(object):
         asyncio.set_event_loop(loop)
         loop.set_debug(debug)
 
-        server_coroutine = loop.create_server(lambda: HttpProtocol(loop=loop, router=self.router), host, port)
+        server_coroutine = loop.create_server(lambda: HttpProtocol(loop=loop, app=self), host, port)
         server_loop = loop.run_until_complete(server_coroutine)
         try:
             print("run forever")
@@ -88,7 +91,6 @@ class Misuzu(object):
         if not self.__test_client:
             return TestClient(self)
         return self.__test_client
-
 
     def param(self,  name, type, location='query', optional=False, default=None, action=None, append=False, description=None):
         """
@@ -123,4 +125,7 @@ class Misuzu(object):
         :param middleware:
         :return:
         """
-        pass
+        if BaseMiddleware not in middleware.__bases__:
+            raise UnknownMiddlewareException()
+
+        self.chains.append(middleware)

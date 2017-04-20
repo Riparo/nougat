@@ -4,3 +4,6 @@ class HttpException(Exception):
         super().__init__()
         self.body = body
         self.status = status
+
+
+class UnknownMiddlewareException(Exception): pass
