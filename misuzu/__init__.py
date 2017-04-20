@@ -3,6 +3,8 @@ from .config import Config
 from .router import Router, Param
 from .protocol import HttpProtocol
 from .test_client import TestClient
+from .middleware import BaseMiddleware
+from .exceptions import *
 
 try:
     import uvloop
@@ -22,6 +24,7 @@ class Misuzu(object):
         self.name = name
         self.__test_client = None
         self.router = Router()
+        self.__chains = []
 
         self.__temper_params = []
 
@@ -123,4 +126,7 @@ class Misuzu(object):
         :param middleware:
         :return:
         """
-        pass
+        if not isinstance(middleware, BaseMiddleware):
+            raise UnknownMiddlewareException()
+
+        self.__chains.append(middleware)
