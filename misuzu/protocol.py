@@ -9,19 +9,21 @@ from time import time
 
 class HttpProtocol(asyncio.Protocol):
 
-    def __init__(self, router, loop):
+    def __init__(self, app, loop):
         """
-        :param router: Router Instance
+        :param app: Misuzu Instance
         :param loop: uvloop or asyncio loop
         """
+        self.app = app
         self.loop = loop
         self.transport = None
         self.request = None
         self.parser = None
         self.url = None
         self.headers = None
-        self.router = router
+        self.router = self.app.router
         self.__body = []
+        self.__middlewares = []
 
     def connection_made(self, transport):
         """
@@ -119,6 +121,13 @@ class HttpProtocol(asyncio.Protocol):
 
         route = self.router.get(request.url, request.method)
         request.generate_params(route)
+
+        # Request Middleware
+        for middleware in self.app.chains:
+            temp = middleware()
+            self.__middlewares.append(temp)
+            temp.on_request(request)
+
         handler = route.handler
         try:
             if asyncio.iscoroutinefunction(handler):
@@ -129,6 +138,12 @@ class HttpProtocol(asyncio.Protocol):
             # if not return Response's instance, then json it
             if not isinstance(result, Response):
                 result = json(result)
+
+            # Response Middleware
+            self.__middlewares.reverse()
+            for middleware in self.__middlewares:
+                middleware.on_response(result)
+
 
         except HttpException as e:
 
