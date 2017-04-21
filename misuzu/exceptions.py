@@ -7,3 +7,12 @@ class HttpException(Exception):
 
 
 class UnknownMiddlewareException(Exception): pass
+
+
+class UnknownSectionException(Exception): pass
+
+
+class MisuzuRuntimeError(Exception):
+
+    def __init__(self, text=""):
+        self.text = text
