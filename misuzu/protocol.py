@@ -28,26 +28,20 @@ class HttpProtocol(asyncio.Protocol):
     def connection_made(self, transport):
         """
         asyncio.Protocol override 函数，当 Protocol 连接时调用
-        :param transport:
-        :return:
         """
         self.transport = transport
 
     def connection_lost(self, exc):
         """
         asyncio.Protocol override 函数，当 Protocol 失去连接时调用
-        :param exc:
-        :return:
         """
         self.request = self.parser = None
         self.__body = []
 
-
     def data_received(self, data):
         """
         asyncio.Protocol override 函数，当 数据传入时调用
-        :param data:
-        :return:
+
         """
 
         if self.parser is None:
