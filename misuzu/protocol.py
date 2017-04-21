@@ -42,9 +42,6 @@ class HttpProtocol(asyncio.Protocol):
         self.request = self.parser = None
         self.__body = []
 
-    # -------------------------------------------- #
-    # Parsing
-    # -------------------------------------------- #
 
     def data_received(self, data):
         """
@@ -63,24 +60,18 @@ class HttpProtocol(asyncio.Protocol):
     def on_url(self, url):
         """
         HttpRequestParser 解析函数
-        :param url:
-        :return:
         """
         self.url = url
 
     def on_header(self, key, value):
         """
         HttpRequestParser 解析函数
-        :param key:
-        :param value:
-        :return:
         """
         self.headers.append((key.decode(), value.decode()))
 
     def on_headers_complete(self):
         """
         HttpRequestParser 解析函数
-        :return:
         """
         # 构建 Request 类
         url = httptools.parse_url(self.url)
@@ -98,11 +89,21 @@ class HttpProtocol(asyncio.Protocol):
     def on_message_complete(self):
 
         self.request.init_body(b''.join(self.__body))
-        # 调用处理函数
-        self.loop.create_task(self.process(self.request))
-    # -------------------------------------------- #
-    # Responding
-    # -------------------------------------------- #
+
+        # calling handler function
+        handler_future = asyncio.Future()
+        asyncio.ensure_future(self.app.handler(self.request, handler_future))
+        handler_future.add_done_callback(self.on_response)
+
+    def on_response(self, handler_future):
+
+        response = handler_future.result()
+        self.transport.write(response.output(self.request.version))
+
+        if not self.parser.should_keep_alive():
+            self.transport.close()
+        self.parser = None
+        self.request = None
 
     # 处理函数
     async def process(self, request):
@@ -151,15 +152,3 @@ class HttpProtocol(asyncio.Protocol):
         
         self.write_response(result)
 
-    def write_response(self, response):
-        """
-        把 Response 类中的内容写入 self.transport 中
-        :param response:
-        :return:
-        """
-        self.transport.write(response.output(self.request.version))
-
-        if not self.parser.should_keep_alive():
-            self.transport.close()
-        self.parser = None
-        self.request = None

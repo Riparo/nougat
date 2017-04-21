@@ -1,12 +1,12 @@
 import asyncio
 import logging
-from .config import Config
 from .router import Router, Param
 from .protocol import HttpProtocol
 from .test_client import TestClient
 from .middleware import BaseMiddleware
 from .section import Section
 from .exceptions import *
+from .response import json
 
 try:
     import uvloop
@@ -84,3 +84,8 @@ class Misuzu(object):
         self.__sections_name.append(section.name)
 
         # TODO add router
+
+    async def handler(self, request, handler_future):
+
+        result = json({"hello": "hello"})
+        handler_future.set_result(result)

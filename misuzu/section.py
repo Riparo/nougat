@@ -6,8 +6,8 @@ from .exceptions import *
 class Section:
 
     def __init__(self, name):
-        self.__name = name
-        self.router = Router
+        self.name = name
+        self.router = Router()
         self.__temper_params = []
         self.chains = []
 
