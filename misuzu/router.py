@@ -1,5 +1,6 @@
 import re
 from .response import Response
+from .exceptions import UnknownRouterException, RouteReDefineException
 
 METHODS = ['HEAD', 'GET', 'POST', 'PUT', 'DELETE', 'HEAD', 'PATCH', 'OPTIONS']
 
@@ -9,7 +10,9 @@ class Router:
     路由系统
     """
 
-    def __init__(self):
+    def __init__(self, app_name):
+
+        self.__app_name = app_name
 
         self.fixed_routes = {}  # 静态路由
         self.dynamic_routes = {}  # 动态路由
@@ -103,6 +106,20 @@ class Router:
 
         return route
 
+    def union(self, router):
+        if not isinstance(router, Router):
+            raise UnknownRouterException()
+
+        for method in METHODS:
+
+            # try get inner dict
+            inter = [x for x in self.fixed_routes[method] if x in router.fixed_routes[method]]
+            if inter:
+                raise RouteReDefineException(method, inter[0])
+            self.fixed_routes[method].update(router.fixed_routes[method])
+
+            self.dynamic_routes[method].extend(router.dynamic_routes[method])
+
 
 class Param:
 
@@ -132,10 +149,6 @@ class Route:
     def add_param(self, name, type, **kwargs):
         """
         向规则中添加参数
-        :param name:
-        :param type:
-        :param kwargs:
-        :return:
         """
         self.params.append(Param(name, type, **kwargs))
 

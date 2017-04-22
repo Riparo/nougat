@@ -6,7 +6,7 @@ from .test_client import TestClient
 from .middleware import BaseMiddleware
 from .section import Section
 from .exceptions import *
-from .response import json
+from .response import json, Response
 
 try:
     import uvloop
@@ -25,11 +25,10 @@ class Misuzu(object):
         """
         self.name = name
         self.__test_client = None
-        self.router = Router()
+        self.router = Router(self.name)
         self.chains = []
 
-        self.sections = []
-        self.__sections_name = []
+        self.sections = {}
 
         self.__temper_params = []
 
@@ -76,16 +75,50 @@ class Misuzu(object):
         if not isinstance(section, Section):
             raise UnknownSectionException()
 
-        if section.name in self.__sections_name:
-            raise MisuzuRuntimeError("it seems that this section's name had beed registered")
+        if section.name in self.sections:
+            raise MisuzuRuntimeError("it seems that this section's name had been registered")
 
         logging.debug("register section {}".format(section.name))
-        self.sections.append(section)
-        self.__sections_name.append(section.name)
+        self.sections[section.name] = section
 
         # TODO add router
+        self.router.union(section.router)
 
     async def handler(self, request, handler_future):
 
-        result = json({"hello": "hello"})
+        temp_middlewares= []
+
+        # find route
+        route = self.router.get(request.url, request.method)
+        request.generate_params(route)
+
+        try:
+            # Request Middleware
+            for middleware in self.chains:
+                temp = middleware()
+                temp_middlewares.append(temp)
+                temp.on_request(request)
+
+            # execute handler
+            handler = route.handler
+            if asyncio.iscoroutinefunction(handler):
+                result = await handler(request)
+            else:
+                result = handler(request)
+
+            # if not return Response's instance, then json it
+            if not isinstance(result, Response):
+                result = json(result)
+
+            # Response Middleware
+            temp_middlewares.reverse()
+            for middleware in temp_middlewares:
+                middleware.on_response(result)
+
+        except HttpException as e:
+
+            result = Response(e.body, e.status)
+
+        # TODO Redirect
+
         handler_future.set_result(result)

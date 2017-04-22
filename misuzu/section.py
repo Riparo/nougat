@@ -7,7 +7,7 @@ class Section:
 
     def __init__(self, name):
         self.name = name
-        self.router = Router()
+        self.router = Router(self.name)
         self.__temper_params = []
         self.chains = []
 
