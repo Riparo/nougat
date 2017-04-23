@@ -1,6 +1,5 @@
 from misuzu import Misuzu
 from misuzu.middleware import BaseMiddleware
-from misuzu.section import Section
 from time import time
 
 
@@ -31,12 +30,9 @@ app = Misuzu(__name__)
 app.register_middleware(ResponseHeaderRecorder)
 app.register_middleware(PrintURLOnRequest)
 
-index = Section("index_test")
-
-@index.get("/")
+@app.get("/")
 async def index_get(request):
 
     return {"hello": "hello"}
 
-app.register_section(index)
-app.run(debug=True)
+app.run()
