@@ -1,5 +1,7 @@
 import asyncio
 import logging
+import signal
+from functools import partial
 from .router import Router, Param
 from .protocol import HttpProtocol
 from .test_client import TestClient
@@ -41,14 +43,19 @@ class Misuzu(object):
         if debug:
             logging.basicConfig(level=logging.DEBUG)
 
-        server_coroutine = loop.create_server(lambda: HttpProtocol(loop=loop, app=self), host, port)
+        def ask_exit():
+            loop.stop()
+
+        for signame in ('SIGINT', 'SIGTERM'):
+            loop.add_signal_handler(getattr(signal, signame), ask_exit)
+
+        server_coroutine = loop.create_server(partial(HttpProtocol, loop=loop, app=self), host, port)
         server_loop = loop.run_until_complete(server_coroutine)
         try:
-            print("run forever")
+            print("server http://{}:{} is running, press Ctrl+C to interrupt.".format(host, port))
             loop.run_forever()
-        except KeyboardInterrupt:
-            print("ctrl+c")
-            server_loop.close()
+        finally:
+            server_coroutine.close()
             loop.close()
 
     def stop(self):
