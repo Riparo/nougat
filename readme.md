@@ -33,7 +33,7 @@ coming soon.
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](https://github.com/Kilerd/misuzu/blob/master/LICEENSE) file for details
+This project is licensed under the MIT License - see the [LICENSE](https://github.com/Kilerd/misuzu/blob/master/LICENSE) file for details
 
 ## Acknowledgments
 
