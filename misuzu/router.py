@@ -1,6 +1,7 @@
 import re
 from .response import Response
 from .exceptions import UnknownRouterException, RouteReDefineException
+from .httpstatus import abort
 
 METHODS = ['HEAD', 'GET', 'POST', 'PUT', 'DELETE', 'HEAD', 'PATCH', 'OPTIONS']
 
@@ -19,7 +20,7 @@ class Router:
 
         self.__init_route()
         self.__dynamic_pattern = re.compile(r"(<([a-zA-Z_]+)>)+")
-        self.__default_route = StaticRoute("", self.__default)
+        self.__default_route = StaticRoute("", self.__default, self.__app_name)
 
     def __init_route(self):
         """
@@ -29,11 +30,12 @@ class Router:
             self.fixed_routes[method] = {}
             self.dynamic_routes[method] = []
 
-    def add(self, rule, handler, method, params):
+    def add(self, rule, handler, section_name, method, params):
         """
         添加路由
         :param rule: 路由规则
         :param handler: 处理方法
+        :param section_name: the name of section
         :param method: 请求方法
         :param params: Param 列表
         """
@@ -41,12 +43,12 @@ class Router:
 
         if is_dynamic:
 
-            this_route = DynamicRoute(rule, handler, match_pattern)
+            this_route = DynamicRoute(rule, handler, section_name, match_pattern)
             self.dynamic_routes[method].append(this_route)
 
         else:
 
-            this_route = StaticRoute(rule, handler)
+            this_route = StaticRoute(rule, handler, section_name)
             self.fixed_routes[method][rule] = this_route
 
         for param in params:
@@ -73,7 +75,8 @@ class Router:
         默认路由，当找不到匹配项时触发
         :return:
         """
-        return Response("404", status=404)
+        print("404")
+        abort(404)
 
     def get(self, url, method):
         """
@@ -145,6 +148,7 @@ class Route:
     rule = None
     handler = None
     params = []
+    section_name = ''
 
     def add_param(self, name, type, **kwargs):
         """
@@ -158,18 +162,19 @@ class DynamicRoute(Route):
     动态路由规则
     """
 
-    def __init__(self, rule, handler, pattern):
+    def __init__(self, rule, handler, section_name, pattern):
         self.rule = rule
         self.handler = handler
+        self.section_name = section_name
         self.pattern = re.compile(pattern)
         self.params = []
-        self.url_dict = {}
+        self.url_params_dict = {}
 
     def match(self, url):
         match = self.pattern.match(url)
         if match:
             if match.pos == 0 and match.endpos == len(url):
-                self.url_dict = match.groupdict()
+                self.url_params_dict = match.groupdict()
                 return match
 
         return None
@@ -179,7 +184,8 @@ class StaticRoute(Route):
     """
     静态路由规则
     """
-    def __init__(self, rule, handler):
+    def __init__(self, rule, handler, section_name):
         self.rule = rule
         self.handler = handler
+        self.section_name = section_name
         self.params = []

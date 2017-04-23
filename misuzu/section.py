@@ -1,6 +1,7 @@
 from .router import Router
 from .middleware import BaseMiddleware
 from .exceptions import *
+from .response import Response, json
 
 
 class Section:
@@ -18,7 +19,7 @@ class Section:
         :param method: HTTP 访问方法
         """
         def response(handler):
-            self.router.add(url, handler, method, self.__temper_params)
+            self.router.add(url, handler, self.name, method, self.__temper_params)
             self.__temper_params = []  # reset temper params
             return handler
         return response
@@ -81,9 +82,33 @@ class Section:
         """
         注册 Middleware
         :param middleware:
-        :return:
         """
         if BaseMiddleware not in middleware.__bases__:
             raise UnknownMiddlewareException()
 
         self.chains.append(middleware)
+
+    async def handler(self, request, route):
+
+        temp_middlewares = []
+
+        # Request Middleware
+        for middleware in self.chains:
+            temp = middleware()
+            temp_middlewares.append(temp)
+            temp.on_request(request)
+
+        response = await route.handler(request)
+
+        # if not return Response's instance, then json it
+        if not isinstance(response, Response):
+            response = json(response)
+
+        # Response Middleware
+        temp_middlewares.reverse()
+        for middleware in temp_middlewares:
+            middleware.on_response(response)
+
+        return response
+
+

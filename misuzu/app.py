@@ -97,6 +97,7 @@ class Misuzu(object):
 
         # find route
         route = self.router.get(request.url, request.method)
+        section = self.sections.get(route.section_name)
         request.generate_params(route)
 
         try:
@@ -106,26 +107,24 @@ class Misuzu(object):
                 temp_middlewares.append(temp)
                 temp.on_request(request)
 
-            # execute handler
-            handler = route.handler
-            if asyncio.iscoroutinefunction(handler):
-                result = await handler(request)
+            if section:
+                response = await section.handler(request, route)
             else:
-                result = handler(request)
+                response = await route.handler(request)
 
             # if not return Response's instance, then json it
-            if not isinstance(result, Response):
-                result = json(result)
+            if not isinstance(response, Response):
+                response = json(response)
 
             # Response Middleware
             temp_middlewares.reverse()
             for middleware in temp_middlewares:
-                middleware.on_response(result)
+                middleware.on_response(response)
 
         except HttpException as e:
 
-            result = Response(e.body, e.status)
+            response = Response(e.body, e.status)
 
         # TODO Redirect
 
-        handler_future.set_result(result)
+        handler_future.set_result(response)
