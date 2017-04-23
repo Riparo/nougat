@@ -28,29 +28,20 @@ class HttpProtocol(asyncio.Protocol):
     def connection_made(self, transport):
         """
         asyncio.Protocol override 函数，当 Protocol 连接时调用
-        :param transport:
-        :return:
         """
         self.transport = transport
 
     def connection_lost(self, exc):
         """
         asyncio.Protocol override 函数，当 Protocol 失去连接时调用
-        :param exc:
-        :return:
         """
         self.request = self.parser = None
         self.__body = []
 
-    # -------------------------------------------- #
-    # Parsing
-    # -------------------------------------------- #
-
     def data_received(self, data):
         """
         asyncio.Protocol override 函数，当 数据传入时调用
-        :param data:
-        :return:
+
         """
 
         if self.parser is None:
@@ -63,24 +54,18 @@ class HttpProtocol(asyncio.Protocol):
     def on_url(self, url):
         """
         HttpRequestParser 解析函数
-        :param url:
-        :return:
         """
         self.url = url
 
     def on_header(self, key, value):
         """
         HttpRequestParser 解析函数
-        :param key:
-        :param value:
-        :return:
         """
         self.headers.append((key.decode(), value.decode()))
 
     def on_headers_complete(self):
         """
         HttpRequestParser 解析函数
-        :return:
         """
         # 构建 Request 类
         url = httptools.parse_url(self.url)
@@ -98,65 +83,15 @@ class HttpProtocol(asyncio.Protocol):
     def on_message_complete(self):
 
         self.request.init_body(b''.join(self.__body))
-        # 调用处理函数
-        self.loop.create_task(self.process(self.request))
-    # -------------------------------------------- #
-    # Responding
-    # -------------------------------------------- #
 
-    # 处理函数
-    async def process(self, request):
-        """
-        Middleware Process
+        # calling handler function
+        handler_future = asyncio.Future()
+        asyncio.ensure_future(self.app.handler(self.request, handler_future))
+        handler_future.add_done_callback(self.on_response)
 
-                  request              request
-        Middle ------------> Middle ------------> ... --->  Route
-         Ware  <------------  ware  <------------ ... ---> Handler
-                  response             response
+    def on_response(self, handler_future):
 
-        :param request:
-        :return:
-        """
-        pprint("url {}".format(request.url.decode('utf-8')))
-
-        route = self.router.get(request.url, request.method)
-        request.generate_params(route)
-
-        # Request Middleware
-        for middleware in self.app.chains:
-            temp = middleware()
-            self.__middlewares.append(temp)
-            temp.on_request(request)
-
-        handler = route.handler
-        try:
-            if asyncio.iscoroutinefunction(handler):
-                result = await handler(request)
-            else:
-                result = handler(request)
-            
-            # if not return Response's instance, then json it
-            if not isinstance(result, Response):
-                result = json(result)
-
-            # Response Middleware
-            self.__middlewares.reverse()
-            for middleware in self.__middlewares:
-                middleware.on_response(result)
-
-
-        except HttpException as e:
-
-            result = Response(e.body, e.status)
-        
-        self.write_response(result)
-
-    def write_response(self, response):
-        """
-        把 Response 类中的内容写入 self.transport 中
-        :param response:
-        :return:
-        """
+        response = handler_future.result()
         self.transport.write(response.output(self.request.version))
 
         if not self.parser.should_keep_alive():
