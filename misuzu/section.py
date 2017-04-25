@@ -4,6 +4,9 @@ from .exceptions import *
 from .response import Response, json
 
 
+__all__ = ['Section']
+
+
 class Section:
 
     def __init__(self, name):

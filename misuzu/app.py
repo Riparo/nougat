@@ -15,7 +15,7 @@ try:
 except:
     uvloop = asyncio
 
-__version__ = "0.0.2"
+__all__ = ['Misuzu']
 
 
 class Misuzu(object):

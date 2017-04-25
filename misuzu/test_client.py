@@ -3,6 +3,9 @@ import asyncio
 from .protocol import HttpProtocol
 
 
+__all__ = ['TestClient']
+
+
 HOST = '127.0.0.1'
 PORT = 40401
 

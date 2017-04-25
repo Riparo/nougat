@@ -2,6 +2,9 @@ from urllib.parse import parse_qsl
 import json
 
 
+__all__ = ['Request']
+
+
 class RequestParams(object):
 
     def __setattr__(self, key, value):

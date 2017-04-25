@@ -1,3 +1,6 @@
+__all__ = ['BaseMiddleware']
+
+
 class BaseMiddleware:
     """
     the basic middleware model

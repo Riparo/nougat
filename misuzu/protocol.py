@@ -7,6 +7,9 @@ from pprint import pprint
 from time import time
 
 
+__all__ = ['HttpProtocol']
+
+
 class HttpProtocol(asyncio.Protocol):
 
     def __init__(self, app, loop):
