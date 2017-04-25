@@ -29,23 +29,17 @@ setup_kwargs = {
     'keywords': 'web framework async',
 
     'packages': ['misuzu'],
-    'install_requires': [],
-}
-try:
-    normal_requirements = [
+    'install_requires': [
         'httptools>=0.0.9',
         'uvloop>=0.8.0',
         'aiofiles>=0.3.0',
         'aiohttp>=2.0.7'
-    ]
-    setup_kwargs['install_requires'] = normal_requirements
+    ],
+}
+try:
     setup(**setup_kwargs)
 
 except DistutilsPlatformError as exception:
-    windows_requirements = [
-        'httptools>=0.0.9',
-        'aiofiles>=0.3.0',
-        'aiohttp>=2.0.7'
-    ]
-    setup_kwargs['install_requires'] = windows_requirements
+
+    setup_kwargs['install_requires'].remove('uvloop>=0.8.0')
     setup(**setup_kwargs)
