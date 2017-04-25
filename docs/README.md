@@ -3,17 +3,19 @@
 
 Misuzu is an async framework which focus on best writing experience of API. The key features are the human friendly params definition, which is divided from the method's logic, and the automatic documents.
 
+## Chinese Document First
 ## hello world
 
 ```python
-from misuzu import Misuzu
+from misuzu import Misuzu, Section
 
 app = Misuzu(__name__)
+main = Section('main')
 
-@app.get('/<name>')
-@app.param('name', str)
-async def index(request):
-    return {'hello': request.params.name}
+@main.get("/")
+async def index_get(request):
+    return {"test": "hello world"}
 
+app.register_section(main)
 app.run()
 ```

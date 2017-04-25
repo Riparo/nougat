@@ -9,15 +9,16 @@ Misuzu 使用了uvloop 作为底层的异步实现，相比于标准库中的 as
 
 ## HELLO WORLD
 ```python
-from misuzu import Misuzu
+from misuzu import Misuzu, Section
 
 app = Misuzu(__name__)
+main = Section('main')
 
-@app.get('/<name>')
-@app.param('name', str)
-async def index(request):
-    return {'hello': request.params.name}
+@main.get("/")
+async def index_get(request):
+    return {"test": "hello world"}
 
+app.register_section(main)
 app.run()
 ```
 
