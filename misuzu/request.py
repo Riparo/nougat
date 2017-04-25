@@ -135,7 +135,7 @@ class Request:
         for param in route.params:
 
             if param.name in route.url_params_dict:
-                self.params.__setattr__(param.name, route.url_dict[param.name])
+                self.params.__setattr__(param.name, route.url_params_dict[param.name])
                 continue
 
             for location in param.location:
