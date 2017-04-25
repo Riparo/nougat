@@ -6,7 +6,7 @@ main = Section('main')
 
 
 @main.get("/")
-async def index_get(reqest):
+async def index_get(request):
     return {"test": "hello world"}
 
 app.register_section(main)
