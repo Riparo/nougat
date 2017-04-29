@@ -20,9 +20,9 @@ class Request:
     """
 
     def __init__(self, url, headers, version, method, query, cookies=None):
-        self.url = url
+        self.url = url.decode('utf-8')
         self.version = version
-        self.method = method
+        self.method = method.decode('utf-8')
         self.headers = dict(headers)
         self.body = {}
         self.params = RequestParams()

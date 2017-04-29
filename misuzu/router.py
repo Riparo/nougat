@@ -92,8 +92,8 @@ class Router:
 
         # TODO refactor
 
-        method = method.decode('utf-8')
-        url = url.decode('utf-8')
+        method = method
+        url = url
 
         # try finding route in static map
         route = self.fixed_routes[method].get(url, None)
