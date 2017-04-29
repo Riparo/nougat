@@ -1,6 +1,7 @@
 import asyncio
 import logging
 import signal
+import sys
 from functools import partial
 from .router import Router, Param
 from .protocol import HttpProtocol
@@ -46,8 +47,9 @@ class Misuzu(object):
         def ask_exit():
             loop.stop()
 
-        for signame in ('SIGINT', 'SIGTERM'):
-            loop.add_signal_handler(getattr(signal, signame), ask_exit)
+        if sys.platform != 'win32':
+            for signame in ('SIGINT', 'SIGTERM'):
+                loop.add_signal_handler(getattr(signal, signame), ask_exit)
 
         server_coroutine = loop.create_server(partial(HttpProtocol, loop=loop, app=self), host, port)
         server_loop = loop.run_until_complete(server_coroutine)
