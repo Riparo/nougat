@@ -27,13 +27,16 @@ class Response:
 
     def output(self, version):
         body = self.body_bytes
-        return b''.join([
+        headers = [
             'HTTP/{} {} {}\r\n'.format(version, self.status, STATUS_CODES.get(self.status, 'FAIL')).encode('latin-1'),
             'Content-Type: {}\r\n'.format(self.content_type).encode('latin-1'),
-            'Content-Length: {}\r\n'.format(len(body)).encode('latin-1'),
-            b'\r\n',
-            body
-        ])
+            'Content-Length: {}\r\n'.format(len(body)).encode('latin-1')
+        ]
+        if self.status == 302:
+            headers.append('Location: {}\r\n'.format(self.body).encode('latin-1'))
+        headers = headers + [b'\r\n', body]
+
+        return b''.join(headers)
 
 
 def text(body):
