@@ -21,6 +21,7 @@ class Router:
 
         self.fixed_routes = {}  # 静态路由
         self.dynamic_routes = {}  # 动态路由
+        self.handlers = {}
 
         self.__init_route()
         self.__dynamic_pattern = re.compile(r"(<([a-zA-Z_]+)>)+")
@@ -54,6 +55,8 @@ class Router:
 
             this_route = StaticRoute(rule, handler, section_name)
             self.fixed_routes[method][rule] = this_route
+
+        self.handlers[handler.__name__] = this_route
 
         for param in params:
             this_route.add_param(**param)
@@ -113,6 +116,51 @@ class Router:
 
         return route
 
+    def url_for(self, route, method='GET', **kwargs):
+        """
+        寻找与路由匹配的 url
+        :param route: 目标路由
+        :param method: HTTP 访问方法
+        :return: url
+        """
+        # r[0] : section name  r[1] : handler name
+        r = re.split(r'\.', route)
+        # count is used to determine whether to use '?' or '&' before params
+        count = 0
+        if self.handlers.get(r[1]) is not None:
+            if self.handlers[r[1]].section_name == r[0]:
+                ret = self.handlers[r[1]].rule
+
+                # if rule is dynamic
+                if self.__is_dynamic(ret)[0]:
+                    match = self.__dynamic_pattern.findall(ret)
+                    for key in kwargs:
+                        if not isinstance(kwargs[key], str):
+                            kwargs[key] = str(kwargs[key])
+                        if match[0][1] == key:
+                            ret = ret.replace(match[0][0], kwargs[key])
+                        else:
+                            if count == 0:
+                                ret = ret + '?' + key + '=' + kwargs[key]
+                            else:
+                                ret = ret + '&' + key + '=' + kwargs[key]
+                            count += 1
+                    return ret
+
+                # if rule is fixed
+                else:
+                    for key in kwargs:
+                        if not isinstance(kwargs[key], str):
+                            kwargs[key] = str(kwargs[key])
+                        if count == 0:
+                            ret = ret + '?' + key + '=' + kwargs[key]
+                        else:
+                            ret = ret + '&' + key + '=' + kwargs[key]
+                        count += 1
+                    return ret
+
+                    # if url is None ,throw error
+
     def union(self, router):
         if not isinstance(router, Router):
             raise UnknownRouterException()
@@ -127,6 +175,7 @@ class Router:
 
             self.dynamic_routes[method].extend(router.dynamic_routes[method])
 
+        self.handlers.update(router.handlers)
 
 class Param:
 
