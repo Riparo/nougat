@@ -10,6 +10,7 @@ from .middleware import BaseMiddleware
 from .section import Section
 from .exceptions import *
 from .response import json, Response
+from .httpstatus import abort
 
 try:
     import uvloop
@@ -68,6 +69,14 @@ class Misuzu(object):
         if not self.__test_client:
             return TestClient(self)
         return self.__test_client
+
+    def redirect(self, url):
+        """
+        重定向
+        :param url: 重定向给定 url
+        :return: 
+        """
+        abort(302, url)
 
     def register_middleware(self, middleware):
         """
