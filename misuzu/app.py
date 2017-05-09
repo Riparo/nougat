@@ -69,32 +69,22 @@ class Misuzu(object):
             return TestClient(self)
         return self.__test_client
 
-    def register_middleware(self, middleware):
-        """
-        注册 Middleware
-        :param middleware:
-        :return:
-        """
-        if BaseMiddleware not in middleware.__bases__:
-            raise UnknownMiddlewareException()
+    def use(self, middleware_or_section_name):
+        if isinstance(middleware_or_section_name, Section):
+            if middleware_or_section_name.name in self.sections:
+                raise MisuzuRuntimeError("it seems that this section's name had been registered")
+            logging.debug("register section {}".format(middleware_or_section_name.name))
+            self.sections[middleware_or_section_name.name] = middleware_or_section_name
 
-        self.chains.append(middleware)
+            self.router.union(middleware_or_section_name.router)
+        else:
 
-    def register_section(self, section):
-        if not isinstance(section, Section):
-            raise UnknownSectionException()
-
-        if section.name in self.sections:
-            raise MisuzuRuntimeError("it seems that this section's name had been registered")
-
-        logging.debug("register section {}".format(section.name))
-        self.sections[section.name] = section
-
-        # TODO add router
-        self.router.union(section.router)
+            # TODO check middleware
+            pass
 
     async def handler(self, request, handler_future):
 
+        # TODO code factor
         temp_middlewares= []
 
         # find route
