@@ -1,5 +1,4 @@
 from .router import Router
-from .middleware import BaseMiddleware
 from .exceptions import *
 from .response import Response, json
 
@@ -81,7 +80,7 @@ class Section:
 
         return response
 
-    def register_middleware(self, middleware):
+    def use(self, middleware):
         """
         注册 Middleware
         :param middleware:

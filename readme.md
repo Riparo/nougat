@@ -9,7 +9,7 @@ Misuzu is an async framework which focus on best writing experience of API. The 
 
 Python 3.5 or newer
 
-uvloop, which is the basemen of misuzu for providing fast async event loop, is linux only, would be replace with asyncio in windows.
+uvloop, which is the basement of misuzu for providing fast async event loop, is linux only, would be replace with asyncio in windows.
 
 ## hello world
 

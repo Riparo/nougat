@@ -20,6 +20,7 @@ PORT = 40401
 class Proxy:
     pass
 
+
 class TestClient(BaseMiddleware):
     app = None
     loop = None
