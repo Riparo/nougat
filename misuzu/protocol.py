@@ -71,10 +71,10 @@ class HttpProtocol(asyncio.Protocol):
         # 构建 Context 类
         self.context = Context(
             app=self.app,
-            path=self.path,
+            path=self.path.decode('utf-8'),
             headers=self.headers,
             version=self.parser.get_http_version(),
-            method=self.parser.get_method(),
+            method=self.parser.get_method().decode('utf-8'),
         )
 
     def on_body(self, body):
