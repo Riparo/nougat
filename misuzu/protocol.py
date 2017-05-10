@@ -70,6 +70,7 @@ class HttpProtocol(asyncio.Protocol):
         """
         # 构建 Context 类
         self.context = Context(
+            app=self.app,
             path=self.path,
             headers=self.headers,
             version=self.parser.get_http_version(),
