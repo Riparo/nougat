@@ -2,14 +2,15 @@ import asyncio
 import logging
 import signal
 import sys
+import inspect
 from functools import partial
-from .router import Router, Param
-from .protocol import HttpProtocol
-from .test_client import TestClient
-from .middleware import BaseMiddleware
-from .section import Section
-from .exceptions import *
-from .response import json, Response
+from misuzu.router import Router, Param
+from misuzu.protocol import HttpProtocol
+from misuzu.test_client import TestClient
+from misuzu.section import Section
+from misuzu.exceptions import *
+from misuzu.response import json, Response
+from misuzu.utils import is_middleware
 
 try:
     import uvloop
@@ -20,6 +21,8 @@ __all__ = ['Misuzu']
 
 
 class Misuzu(object):
+
+    __slots__ = ['name', '__test_client', 'router', 'chains', 'sections']
 
     def __init__(self, name):
         """
@@ -33,54 +36,20 @@ class Misuzu(object):
 
         self.sections = {}
 
-        self.__temper_params = []
-
-    def run(self, host="127.0.0.1", port=8000, debug=False, loop=None):
-        # Create Event Loop
-        loop = loop or uvloop.new_event_loop()
-        asyncio.set_event_loop(loop)
-        loop.set_debug(debug)
-
-        if debug:
-            logging.basicConfig(level=logging.DEBUG)
-
-        def ask_exit():
-            loop.stop()
-
-        if sys.platform != 'win32':
-            for signame in ('SIGINT', 'SIGTERM'):
-                loop.add_signal_handler(getattr(signal, signame), ask_exit)
-
-        server_coroutine = loop.create_server(partial(HttpProtocol, loop=loop, app=self), host, port)
-        server_loop = loop.run_until_complete(server_coroutine)
-        try:
-            print("server http://{}:{} is running, press Ctrl+C to interrupt.".format(host, port))
-            loop.run_forever()
-        finally:
-            server_coroutine.close()
-            loop.close()
-
-    def stop(self):
-        asyncio.get_event_loop().stop()
-
-    @property
-    def test(self):
-        if not self.__test_client:
-            return TestClient(self)
-        return self.__test_client
-
     def use(self, middleware_or_section_name):
         if isinstance(middleware_or_section_name, Section):
-            if middleware_or_section_name.name in self.sections:
+            section = middleware_or_section_name
+            if section.name in self.sections:
                 raise MisuzuRuntimeError("it seems that this section's name had been registered")
-            logging.debug("register section {}".format(middleware_or_section_name.name))
-            self.sections[middleware_or_section_name.name] = middleware_or_section_name
+            logging.debug("register section {}".format(section.name))
+            self.sections[section.name] = section
 
-            self.router.union(middleware_or_section_name.router)
+            self.router.union(section.router)
         else:
 
-            # TODO check middleware
-            pass
+            is_middleware(middleware_or_section_name)
+            middleware = middleware_or_section_name
+            self.chains.append(middleware)
 
     async def handler(self, request, handler_future):
 
@@ -120,3 +89,37 @@ class Misuzu(object):
         # TODO Redirect
 
         handler_future.set_result(response)
+
+    @property
+    def test(self):
+        if not self.__test_client:
+            return TestClient(self)
+        return self.__test_client
+
+    def run(self, host="127.0.0.1", port=8000, debug=False, loop=None):
+        # Create Event Loop
+        loop = loop or uvloop.new_event_loop()
+        asyncio.set_event_loop(loop)
+        loop.set_debug(debug)
+
+        if debug:
+            logging.basicConfig(level=logging.DEBUG)
+
+        def ask_exit():
+            loop.stop()
+
+        if sys.platform != 'win32':
+            for signame in ('SIGINT', 'SIGTERM'):
+                loop.add_signal_handler(getattr(signal, signame), ask_exit)
+
+        server_coroutine = loop.create_server(partial(HttpProtocol, loop=loop, app=self), host, port)
+        server_loop = loop.run_until_complete(server_coroutine)
+        try:
+            print("server http://{}:{} is running, press Ctrl+C to interrupt.".format(host, port))
+            loop.run_forever()
+        finally:
+            server_coroutine.close()
+            loop.close()
+
+    def stop(self):
+        asyncio.get_event_loop().stop()
