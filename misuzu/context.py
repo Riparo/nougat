@@ -1,28 +1,49 @@
+import httptools
+import json
+
+class Params(object):
+
+    def __setattr__(self, key, value):
+        super().__setattr__(key, value)
+
+    def __format_attr(self, attr_type, value):
+        pass
+
+
 class Context(object):
 
-    def __init__(self, path):
+    def __init__(self, app, path, headers, version, method):
 
         # base
+        self.app = app
+
         self.path = path  # e.g. /hello?a=1
-        self.__version = None  # http version
-        self.url = None  # e.g. /hello
+
+        path_parse = httptools.parse_url(self.path)
+        self.url = path_parse.path  # e.g. /hello
+        self.query_string = path_parse.query  # e.g. a=1
+
+        self.__version = version  # http version
+        self.method = method
 
         # request
-        self.method = None
-        self.cookies = None
-        self.headers = {}
-        self.ip = None
+        self.headers = dict(headers)
+        self.cookies = {}
+
+        self.ip = None  # TODO load ip from transport
         self.req_body = {}
 
         self.query = None
-        self.query_string = None
 
         # params
-        self.params = None
+        self.params = Params()
 
         # response
         self.res = None
         self.status = None
+
+        self.__init_query(self.query_string)
+        self.__init__cookies()
 
 
     @property
@@ -66,6 +87,14 @@ class Context(object):
         :param forever: return 302 status code if False , otherwise return 301 status code
         """
         # TODO redirect function
+        pass
+
+
+    @property
+    def output(self):
+        """
+        output the http payload
+        """
         pass
 
     def __init__cookies(self):
