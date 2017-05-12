@@ -2,7 +2,6 @@ import inspect
 from functools import partial
 from misuzu.router import Router
 from misuzu.exceptions import *
-from misuzu.response import Response, json
 from misuzu.utils import is_middleware
 
 

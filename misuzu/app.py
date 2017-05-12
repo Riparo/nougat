@@ -9,7 +9,6 @@ from misuzu.protocol import HttpProtocol
 from misuzu.test_client import TestClient
 from misuzu.section import Section
 from misuzu.exceptions import *
-from misuzu.response import json, Response
 from misuzu.utils import is_middleware
 
 try:
@@ -22,7 +21,7 @@ __all__ = ['Misuzu']
 
 class Misuzu(object):
 
-    __slots__ = ['name', '__test_client', 'router', 'chains', 'sections']
+    __slots__ = ['name', '__test_client', 'router', 'chain', 'sections']
 
     def __init__(self, name=None):
         """
@@ -32,7 +31,7 @@ class Misuzu(object):
         self.name = name
         self.__test_client = None
         self.router = Router(self.name)
-        self.chains = []
+        self.chain = []
 
         self.sections = {}
 
@@ -48,7 +47,7 @@ class Misuzu(object):
         elif inspect.isfunction(middleware_or_section_name):
                 is_middleware(middleware_or_section_name)
                 middleware = middleware_or_section_name
-                self.chains.insert(0, middleware)
+                self.chain.insert(0, middleware)
         else:
             raise MisuzuRuntimeError("misuzu only can use section instance or middleware function")
 
@@ -63,7 +62,7 @@ class Misuzu(object):
 
         handler = partial(section.handler, context=context, route=route)
 
-        for middleware in self.chains:
+        for middleware in self.chain:
             handler = partial(middleware, context=context, next=handler)
 
         try:

@@ -1,5 +1,4 @@
 import re
-from misuzu.response import Response
 from misuzu.exceptions import UnknownRouterException, RouteReDefineException
 from misuzu.httpstatus import abort
 

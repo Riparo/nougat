@@ -2,8 +2,6 @@ from misuzu.app import *
 from misuzu.exceptions import *
 from misuzu.httpstatus import *
 from misuzu.protocol import *
-from misuzu.request import *
-from misuzu.response import *
 from misuzu.router import *
 from misuzu.section import *
 from misuzu.test_client import *
