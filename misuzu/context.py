@@ -1,5 +1,8 @@
 import httptools
 import json
+from urllib.parse import parse_qsl
+from misuzu.httpstatus import STATUS_CODES
+
 
 class Params(object):
 
@@ -17,9 +20,9 @@ class Context(object):
         # base
         self.app = app
 
-        self.path = path  # e.g. /hello?a=1
+        self.path = path.decode()  # e.g. /hello?a=1
 
-        path_parse = httptools.parse_url(self.path)
+        path_parse = httptools.parse_url(path)
         self.url = path_parse.path  # e.g. /hello
         self.query_string = path_parse.query  # e.g. a=1
 
@@ -34,6 +37,8 @@ class Context(object):
         self.req_body = {}
 
         self.query = None
+
+        self.json = None
 
         # params
         self.params = Params()
@@ -95,7 +100,26 @@ class Context(object):
         """
         output the http payload
         """
-        pass
+        def body_bytes(body):
+            body_type = type(body)
+            if body_type is str:
+                body = body.encode('utf-8')
+            elif body_type is bytes:
+                body = body
+            else:
+                body = b'Unable to interpret body'
+
+            return body
+
+        # TODO format the output
+        body = body_bytes(self.res)
+        return b''.join([
+            'HTTP/{} {} {}\r\n'.format(self.__version, self.status, STATUS_CODES.get(self.status, 'FAIL')).encode('latin-1'),
+            'Content-Type: {}\r\n'.format(self.type).encode('latin-1'),
+            'Content-Length: {}\r\n'.format(len(body)).encode('latin-1'),
+            b'\r\n',
+            body
+        ])
 
     def __init__cookies(self):
         """
@@ -141,11 +165,11 @@ class Context(object):
         :return:
         """
         # parse body as json
-        if self.content_type == 'application/json':
+        if self.type == 'application/json':
             self.json = json.loads(body.decode())
             return
 
-        if not self.content_type.startswith('multipart/'):
+        if not self.type.startswith('multipart/'):
             pairs = parse_qsl(body.decode())
             for key, value in pairs:
                 self.__set_body(key, value)

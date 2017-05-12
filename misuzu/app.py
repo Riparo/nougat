@@ -55,41 +55,26 @@ class Misuzu(object):
     async def handler(self, context, handler_future):
 
         # TODO code factor
-        middleware_runtime_chains = []
 
         # find route
         route = self.router.get(context)
         section = self.sections.get(route.section_name)
-        request.generate_params(route)
+        context.generate_params(route)
+
+        handler = partial(section.handler, context=context, route=route)
+
+        for middleware in self.chains:
+            handler = partial(middleware, context=context, next=handler)
 
         try:
-            # Request Middleware
-            for middleware in self.chains:
-                temp = middleware()
-                temp_middlewares.append(temp)
-                temp.on_request(request)
-
-            if section:
-                response = await section.handler(request, route)
-            else:
-                response = await route.handler(request)
-
-            # if not return Response's instance, then json it
-            if not isinstance(response, Response):
-                response = json(response)
-
-            # Response Middleware
-            temp_middlewares.reverse()
-            for middleware in temp_middlewares:
-                middleware.on_response(response)
+            await handler()
 
         except HttpException as e:
 
-            response = Response(e.body, e.status)
+            # TODO: abort
+            pass
 
-        # TODO Redirect
-
-        handler_future.set_result(response)
+        handler_future.set_result(context)
 
     @property
     def test(self):

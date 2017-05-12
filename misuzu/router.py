@@ -81,7 +81,7 @@ class Router:
         """
         abort(404)
 
-    def get(self, url, method):
+    def get(self, context):
         """
         寻找与 url 匹配的路由
         :param url: 目标 URL
@@ -91,8 +91,8 @@ class Router:
 
         # TODO refactor
 
-        method = method
-        url = url
+        method = context.method
+        url = context.path
 
         # try finding route in static map
         route = self.fixed_routes[method].get(url, None)

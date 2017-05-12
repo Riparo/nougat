@@ -93,33 +93,18 @@ class Section:
         else:
             raise MisuzuRuntimeError("section only can use middleware function")
 
-
     async def handler(self, context, route):
 
         async def ret_handler(context, next):
             ret = next()
+            # TODO handle different type of ret: json, text, html
             context.res = ret
 
-        middleware_runtime_chain = []
+        handler = route.handler
+        handler = partial(handler, ctx=context)
+        handler = partial(ret_handler, context=context, next=handler)
 
-
-        # Request Middleware
         for middleware in self.chain:
-            temp = middleware()
-            temp_middlewares.append(temp)
-            temp.on_request(request)
+            handler = partial(middleware, context=context, next=handler)
 
-        response = await route.handler(request)
-
-        # if not return Response's instance, then json it
-        if not isinstance(response, Response):
-            response = json(response)
-
-        # Response Middleware
-        temp_middlewares.reverse()
-        for middleware in temp_middlewares:
-            middleware.on_response(response)
-
-        return response
-
-
+        await handler()
