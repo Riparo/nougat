@@ -48,7 +48,7 @@ class Misuzu(object):
         elif inspect.isfunction(middleware_or_section_name):
                 is_middleware(middleware_or_section_name)
                 middleware = middleware_or_section_name
-                self.chains.append(middleware)
+                self.chains.insert(0, middleware)
         else:
             raise MisuzuRuntimeError("misuzu only can use section instance or middleware function")
 

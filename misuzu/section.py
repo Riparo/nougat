@@ -89,14 +89,19 @@ class Section:
         """
         if inspect.isfunction(middleware):
                 is_middleware(middleware)
-                self.chain.append(middleware)
+                self.chain.insert(0, middleware)
         else:
             raise MisuzuRuntimeError("section only can use middleware function")
 
 
     async def handler(self, context, route):
 
-        middleware_runtime_chains = []
+        async def ret_handler(context, next):
+            ret = next()
+            context.res = ret
+
+        middleware_runtime_chain = []
+
 
         # Request Middleware
         for middleware in self.chain:
