@@ -20,34 +20,38 @@ class Proxy:
     pass
 
 
-class TestClient():
+class TestClient:
     app = None
     loop = None
     server = None
-    response = None
-    request = Proxy()
 
-    def on_request(self, request):
-        self.request.content = request
+
+    ret_context = Proxy()
+
+    @staticmethod
+    async def test_middleware(context, next):
+        global ret_context
+        await next()
+        ret_context.ctx = context
 
     def __init__(self, app=None):
         self.app = app
         self.loop = uvloop.new_event_loop()
         self.server = None
-        self.response = None
 
     async def __local_request(self, method, url, *args, **kwargs):
 
         url = 'http://{host}:{port}{uri}'.format(host=HOST, port=PORT, uri=url)
+        print(url)
         async with aiohttp.ClientSession() as session:
             async with getattr(session, method)(url, *args, **kwargs) as response:
-                response.text = await response.text()
-                self.response = response
+                print(response.res)
                 self.server.close()
                 asyncio.get_event_loop().stop()
 
     def __request(self, method, url, *args, **kwargs):
-        self.app.register_middleware(TestClient)
+
+        self.app.chain.append(TestClient.test_middleware)
 
         asyncio.set_event_loop(self.loop)
         server_coroutine = self.loop.create_server(partial(HttpProtocol, loop=self.loop, app=self.app),
@@ -57,7 +61,7 @@ class TestClient():
 
         self.loop.run_until_complete(self.__local_request(method, url, *args, **kwargs))
 
-        return self.request.content, self.response
+        return self.ret_context.ctx.res, self.ret_context.ctx
 
     def head(self, url, *args, **kwargs):
         return self.__request('head', url, *args, **kwargs)

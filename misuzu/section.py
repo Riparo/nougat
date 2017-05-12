@@ -95,7 +95,7 @@ class Section:
     async def handler(self, context, route):
 
         async def ret_handler(context, next):
-            ret = next()
+            ret = await next()
             # TODO handle different type of ret: json, text, html
             context.res = ret
 

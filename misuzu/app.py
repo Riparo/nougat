@@ -54,24 +54,27 @@ class Misuzu(object):
     async def handler(self, context, handler_future):
 
         # TODO code factor
-
-        # find route
-        route = self.router.get(context)
-        section = self.sections.get(route.section_name)
-        context.generate_params(route)
-
-        handler = partial(section.handler, context=context, route=route)
-
-        for middleware in self.chain:
-            handler = partial(middleware, context=context, next=handler)
-
         try:
+            # find route
+            route = self.router.get(context)
+            if not route:
+                raise HttpException(None, 404)
+
+            section = self.sections.get(route.section_name)
+            context.generate_params(route)
+
+            handler = partial(section.handler, context=context, route=route)
+
+            for middleware in self.chain:
+                handler = partial(middleware, context=context, next=handler)
+
             await handler()
 
         except HttpException as e:
 
             # TODO: abort
             pass
+            print(e.status)
 
         handler_future.set_result(context)
 

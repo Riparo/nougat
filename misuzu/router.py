@@ -23,7 +23,6 @@ class Router:
 
         self.__init_route()
         self.__dynamic_pattern = re.compile(r"(<([a-zA-Z_]+)>)+")
-        self.__default_route = StaticRoute("", self.__default, self.__app_name)
 
     def __init_route(self):
         """
@@ -72,19 +71,10 @@ class Router:
 
         return False, rule
 
-    @staticmethod
-    async def __default(request):
-        """
-        默认路由，当找不到匹配项时触发
-        :return:
-        """
-        abort(404)
-
     def get(self, context):
         """
         寻找与 url 匹配的路由
-        :param url: 目标 URL
-        :param method: HTTP 访问方法
+        :param context: request context
         :return: Route 类
         """
 
@@ -105,9 +95,6 @@ class Router:
             for one_route in self.dynamic_routes[method]:
                 if one_route.match(url):
                     return one_route
-
-        if route is None:
-            route = self.__default_route
 
         return route
 
