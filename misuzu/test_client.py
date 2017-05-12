@@ -1,8 +1,7 @@
 import aiohttp
 import asyncio
 from functools import partial
-from .protocol import HttpProtocol
-from .middleware import BaseMiddleware
+from misuzu.protocol import HttpProtocol
 
 try:
     import uvloop
@@ -21,7 +20,7 @@ class Proxy:
     pass
 
 
-class TestClient(BaseMiddleware):
+class TestClient():
     app = None
     loop = None
     server = None

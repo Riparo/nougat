@@ -1,7 +1,7 @@
 import re
-from .response import Response
-from .exceptions import UnknownRouterException, RouteReDefineException
-from .httpstatus import abort
+from misuzu.response import Response
+from misuzu.exceptions import UnknownRouterException, RouteReDefineException
+from misuzu.httpstatus import abort
 
 
 __all__ = ['Router', 'Param', 'Route', 'DynamicRoute', 'StaticRoute']
@@ -79,7 +79,6 @@ class Router:
         默认路由，当找不到匹配项时触发
         :return:
         """
-        print("404")
         abort(404)
 
     def get(self, url, method):

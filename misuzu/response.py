@@ -1,5 +1,5 @@
-from json import  dumps
-from .httpstatus import STATUS_CODES
+from json import dumps
+from misuzu.httpstatus import STATUS_CODES
 
 
 __all__ = ['Response', 'json', 'text', 'html']

@@ -1,6 +1,6 @@
 import asyncio
 import httptools
-from .context import Context
+from misuzu.context import Context
 
 __all__ = ['HttpProtocol']
 
