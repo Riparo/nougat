@@ -1,6 +1,9 @@
-from .router import Router
-from .exceptions import *
-from .response import Response, json
+import inspect
+from functools import partial
+from misuzu.router import Router
+from misuzu.exceptions import *
+from misuzu.response import Response, json
+from misuzu.utils import is_middleware
 
 
 __all__ = ['Section']
@@ -12,7 +15,7 @@ class Section:
         self.name = name
         self.router = Router(self.name)
         self.__temper_params = []
-        self.chains = []
+        self.chain = []
 
     def __route(self, url, method):
         """
@@ -82,20 +85,21 @@ class Section:
 
     def use(self, middleware):
         """
-        注册 Middleware
-        :param middleware:
+        register Middleware
         """
-        if BaseMiddleware not in middleware.__bases__:
-            raise UnknownMiddlewareException()
+        if inspect.isfunction(middleware):
+                is_middleware(middleware)
+                self.chain.append(middleware)
+        else:
+            raise MisuzuRuntimeError("section only can use middleware function")
 
-        self.chains.append(middleware)
 
-    async def handler(self, request, route):
+    async def handler(self, context, route):
 
-        temp_middlewares = []
+        middleware_runtime_chains = []
 
         # Request Middleware
-        for middleware in self.chains:
+        for middleware in self.chain:
             temp = middleware()
             temp_middlewares.append(temp)
             temp.on_request(request)

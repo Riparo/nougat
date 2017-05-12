@@ -24,7 +24,7 @@ class Misuzu(object):
 
     __slots__ = ['name', '__test_client', 'router', 'chains', 'sections']
 
-    def __init__(self, name):
+    def __init__(self, name=None):
         """
         初始化 Misuzu 类
         :param name: APP 名称， 并没有什么用
@@ -45,19 +45,20 @@ class Misuzu(object):
             self.sections[section.name] = section
 
             self.router.union(section.router)
+        elif inspect.isfunction(middleware_or_section_name):
+                is_middleware(middleware_or_section_name)
+                middleware = middleware_or_section_name
+                self.chains.append(middleware)
         else:
+            raise MisuzuRuntimeError("misuzu only can use section instance or middleware function")
 
-            is_middleware(middleware_or_section_name)
-            middleware = middleware_or_section_name
-            self.chains.append(middleware)
-
-    async def handler(self, request, handler_future):
+    async def handler(self, context, handler_future):
 
         # TODO code factor
-        temp_middlewares= []
+        middleware_runtime_chains = []
 
         # find route
-        route = self.router.get(request.url, request.method)
+        route = self.router.get(context)
         section = self.sections.get(route.section_name)
         request.generate_params(route)
 
