@@ -1,20 +1,17 @@
 from misuzu import Misuzu, Section
+from misuzu.exceptions import MisuzuRuntimeError, UnknownSectionException
 import json
+import pytest
 
 
-def test_app_get():
-    app = Misuzu("first test")
+def test_use_not_section_instance():
+    with pytest.raises(MisuzuRuntimeError):
+        app = Misuzu("test")
+        app.use(Misuzu())
 
-    sec = Section("test")
 
-    @sec.get("/")
-    async def index(request):
-        return {"hello": "world"}
+def test_use_section():
+    app = Misuzu("test")
+    app.use(Section("test"))
 
-    app.register_section(sec)
-
-    request, response = app.test.get("/")
-
-    assert request.url == '/'
-    assert response.text == '{"hello": "world"}'
-
+    assert len(app.sections) == 1
