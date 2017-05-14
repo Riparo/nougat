@@ -73,6 +73,7 @@ class HttpProtocol(asyncio.Protocol):
             app=self.app,
             path=self.path,
             headers=self.headers,
+            ip=self.transport.get_extra_info('peername')[0],
             version=self.parser.get_http_version(),
             method=self.parser.get_method().decode('utf-8'),
         )

@@ -24,10 +24,7 @@ class Misuzu(object):
     __slots__ = ['name', '__test_client', 'router', 'chain', 'sections']
 
     def __init__(self, name=None):
-        """
-        初始化 Misuzu 类
-        :param name: APP 名称， 并没有什么用
-        """
+
         self.name = name
         self.__test_client = None
         self.router = Router(self.name)
@@ -36,7 +33,11 @@ class Misuzu(object):
         self.sections = {}
 
     def use(self, middleware_or_section_name):
+        """
+        register middleware or section 
+        """
         if isinstance(middleware_or_section_name, Section):
+            # register section
             section = middleware_or_section_name
             if section.name in self.sections:
                 raise MisuzuRuntimeError("it seems that this section's name had been registered")
@@ -45,9 +46,10 @@ class Misuzu(object):
 
             self.router.union(section.router)
         elif inspect.isfunction(middleware_or_section_name):
-                is_middleware(middleware_or_section_name)
-                middleware = middleware_or_section_name
-                self.chain.insert(0, middleware)
+            # register middleware
+            is_middleware(middleware_or_section_name)
+            middleware = middleware_or_section_name
+            self.chain.insert(0, middleware)
         else:
             raise MisuzuRuntimeError("misuzu only can use section instance or middleware function")
 
@@ -72,9 +74,8 @@ class Misuzu(object):
 
         except HttpException as e:
 
-            # TODO: abort
-            pass
-            print(e.status)
+            context.status = e.status
+            context.res = e.body
 
         handler_future.set_result(context)
 

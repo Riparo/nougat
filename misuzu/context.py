@@ -2,6 +2,7 @@ import httptools
 import json
 from urllib.parse import parse_qsl
 from misuzu.httpstatus import STATUS_CODES
+from misuzu.exceptions import HttpException
 
 
 class Params(object):
@@ -15,7 +16,7 @@ class Params(object):
 
 class Context(object):
 
-    def __init__(self, app, path, headers, version, method):
+    def __init__(self, app, path, headers, ip, version, method):
 
         # base
         self.app = app
@@ -33,7 +34,7 @@ class Context(object):
         self.headers = dict(headers)
         self.cookies = {}
 
-        self.ip = None  # TODO load ip from transport
+        self.ip = self.__init_ip(ip)
         self.req_body = {}
 
         self.query = None
@@ -76,7 +77,7 @@ class Context(object):
         # TODO set function for header
         pass
 
-    def url_for(self, name):
+    def url_for(self, name, **kwargs):
         """
         get the url according to the section name and handler name
         :param name: a string like section_name.handler_name
@@ -94,6 +95,13 @@ class Context(object):
         # TODO redirect function
         pass
 
+    def abort(self, status, body=None):
+        """
+        abort HTTPException
+        :param status: http status code
+        :param body: http body
+        """
+        raise HttpException(body, status)
 
     @property
     def output(self):
@@ -112,7 +120,7 @@ class Context(object):
             return body
 
         # TODO format the output
-        body = body_bytes(self.res)
+        body = body_bytes(self.res or STATUS_CODES.get(self.status, 'FAIL'))
         return b''.join([
             'HTTP/{} {} {}\r\n'.format(self.__version, self.status, STATUS_CODES.get(self.status, 'FAIL')).encode('latin-1'),
             'Content-Type: {}\r\n'.format(self.type).encode('latin-1'),
@@ -120,6 +128,15 @@ class Context(object):
             b'\r\n',
             body
         ])
+
+    def __init_ip(self, ip):
+        """
+        set the right ip
+        """
+        if self.app.config['X-FORWARD-IP']:
+            return self.headers.get("X-Forwarded-For", "").strip().split(",")
+        else:
+            return ip
 
     def __init__cookies(self):
         """
