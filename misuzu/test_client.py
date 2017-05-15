@@ -44,6 +44,7 @@ class TestClient:
         server_loop = self.loop.run_until_complete(server_coroutine)
         self.loop.run_until_complete(__local_request(method, url, *args, **kwargs))
         self.loop.run_forever()
+        server_loop.close()
         return self.app.ctx.res, self.app.ctx
 
     def head(self, url, *args, **kwargs):
