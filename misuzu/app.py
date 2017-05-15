@@ -21,13 +21,13 @@ __all__ = ['Misuzu']
 
 class Misuzu(object):
 
-    __slots__ = ['name', '__test_client', 'router', 'chain', 'sections']
-
     def __init__(self, name=None):
 
         self.name = name
         self.__test_client = None
         self.router = Router(self.name)
+
+        self.config = {}
         self.chain = []
 
         self.sections = {}

@@ -15,7 +15,7 @@ def is_middleware(func):
     if len(args) != 2:
         raise UnknownMiddlewareException("middleware {} should has 2 params named ctx and next".format(func.__name__))
 
-    if args[0][0] != 'ctx':
+    if args[0][0] != 'context':
         raise UnknownMiddlewareException("the first param's name of middleware {} should be ctx".format(func.__name__))
 
     if args[1][0] != 'next':

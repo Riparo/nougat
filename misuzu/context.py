@@ -45,15 +45,16 @@ class Context(object):
         self.params = Params()
 
         # response
+        self.type = "text/plain"
         self.res = None
-        self.status = None
+        self.status = 200
 
         self.__init_query(self.query_string)
         self.__init__cookies()
 
 
     @property
-    def type(self):
+    def content_type(self):
         """
         the content type for request
         """
@@ -133,7 +134,7 @@ class Context(object):
         """
         set the right ip
         """
-        if self.app.config['X-FORWARD-IP']:
+        if self.app.config.get("X-FORWARD-IP", False):
             return self.headers.get("X-Forwarded-For", "").strip().split(",")
         else:
             return ip
@@ -182,11 +183,11 @@ class Context(object):
         :return:
         """
         # parse body as json
-        if self.type == 'application/json':
+        if self.content_type == 'application/json':
             self.json = json.loads(body.decode())
             return
 
-        if not self.type.startswith('multipart/'):
+        if not self.content_type.startswith('multipart/'):
             pairs = parse_qsl(body.decode())
             for key, value in pairs:
                 self.__set_body(key, value)
