@@ -45,6 +45,7 @@ class Context(object):
         self.params = Params()
 
         # response
+        self.res_header = {}
         self.type = "text/plain"
         self.res = None
         self.status = 200
@@ -75,8 +76,8 @@ class Context(object):
         :param value: the value of header
         """
 
-        # TODO set function for header
-        pass
+        self.res_header[key] = value
+
 
     def url_for(self, name, **kwargs):
         """
@@ -87,14 +88,13 @@ class Context(object):
         # TODO url for function
         pass
 
-    def redirect(self, url, forever=False):
+    def redirect(self, url):
         """
         redirect to another page
         :param url: the page need to go
-        :param forever: return 302 status code if False , otherwise return 301 status code
         """
-        # TODO redirect function
-        pass
+        self.set("Location", url)
+        self.abort(302)
 
     def abort(self, status, body=None):
         """
@@ -103,6 +103,17 @@ class Context(object):
         :param body: http body
         """
         raise HttpException(body, status)
+
+    def __build_response_headers(self):
+        """
+        generator response headers
+        :return: 
+        """
+        headers = []
+        for key, value in self.res_header.items():
+            headers.append("{}: {}\r\n".format(key, value).encode('utf-8'))
+
+        return headers
 
     @property
     def output(self):
@@ -122,13 +133,24 @@ class Context(object):
 
         # TODO format the output
         body = body_bytes(self.res or STATUS_CODES.get(self.status, 'FAIL'))
-        return b''.join([
-            'HTTP/{} {} {}\r\n'.format(self.__version, self.status, STATUS_CODES.get(self.status, 'FAIL')).encode('latin-1'),
-            'Content-Type: {}\r\n'.format(self.type).encode('latin-1'),
-            'Content-Length: {}\r\n'.format(len(body)).encode('latin-1'),
-            b'\r\n',
-            body
-        ])
+
+        playload = []
+
+        # HTTP STATUS
+        playload.append('HTTP/{} {} {}\r\n'.format(self.__version, self.status, STATUS_CODES.get(self.status, 'FAIL')).encode('latin-1'))
+
+        # CONTENT TYPE AND LENGTH
+        playload.append('Content-Type: {}\r\n'.format(self.type).encode('latin-1'))
+        playload.append('Content-Length: {}\r\n'.format(len(body)).encode('latin-1'))
+
+        # HEADERS OF LOCATION OR COOKIES
+        playload.extend(self.__build_response_headers())
+
+        # RESPONSE BODY
+        playload.append(b'\r\n')
+        playload.append(body)
+
+        return b''.join(playload)
 
     def __init_ip(self, ip):
         """

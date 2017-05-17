@@ -68,6 +68,9 @@ class TestClient:
         self.loop.run_forever()
 
         server_loop.close()
+        if not hasattr(self.app, "ctx"):
+            self.app.ctx = None
+
         return ret.ret, self.app.ctx
 
     def head(self, url, *args, **kwargs):
@@ -90,3 +93,10 @@ class TestClient:
 
     def patch(self, url, *args, **kwargs):
         return self.__request('patch', url, *args, **kwargs)
+
+    def url(self, path=""):
+        """
+        generate the abstract url for test case
+        """
+
+        return 'http://{}:{}{}'.format(HOST, PORT, path)
