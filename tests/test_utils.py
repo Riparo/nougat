@@ -31,3 +31,11 @@ def test_second_param_is_not_next():
             pass
 
         is_middleware(test_middleware)
+
+
+def test_use_pass_middleware():
+
+    async def test(ctx, next):
+        pass
+
+    is_middleware(test)

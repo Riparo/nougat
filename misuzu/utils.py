@@ -10,12 +10,13 @@ def is_middleware(func):
     args = list(inspect.signature(func).parameters.items())
 
     if not inspect.iscoroutinefunction(func):
+        print("hello")
         raise UnknownMiddlewareException("middleware {} should be awaitable".format(func.__name__))
 
     if len(args) != 2:
         raise UnknownMiddlewareException("middleware {} should has 2 params named ctx and next".format(func.__name__))
 
-    if args[0][0] != 'context':
+    if args[0][0] != 'ctx':
         raise UnknownMiddlewareException("the first param's name of middleware {} should be ctx".format(func.__name__))
 
     if args[1][0] != 'next':
