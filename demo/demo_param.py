@@ -8,5 +8,5 @@ main = Section('main')
 async def index_get(request):
     return {'hello': request.params.name}
 
-app.register_section(main)
+app.use(main)
 app.run()

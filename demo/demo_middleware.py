@@ -1,38 +1,22 @@
-from misuzu import Misuzu
-from misuzu.middleware import BaseMiddleware
-from time import time
+from misuzu import Misuzu, Section
 
+async def request_header(ctx, next):
 
-class ResponseHeaderRecorder(BaseMiddleware):
+    # do whatever you want before handler
+    await next(ctx)
 
-    def __init__(self):
-        super().__init__()
-        self.__start_time = None
-
-    def on_request(self, request):
-        self.__start_time = time()
-
-    def on_response(self, response):
-        handle_time = time() - self.__start_time
-        print("time: {}".format(handle_time))
-
-
-class PrintURLOnRequest(BaseMiddleware):
-
-    def __init__(self):
-        super().__init__()
-
-    def on_request(self, request):
-        print("on request and url is {}".format(request.url))
+    # do whatever you want after handler
 
 
 app = Misuzu(__name__)
-app.register_middleware(ResponseHeaderRecorder)
-app.register_middleware(PrintURLOnRequest)
+app.use(request_header)
 
-@app.get("/")
-async def index_get(request):
+main = Section("main")
 
-    return {"hello": "hello"}
+
+@main.get("/")
+async def index(ctx):
+    return {"hello": "world"}
+
 
 app.run()

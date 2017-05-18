@@ -2,14 +2,14 @@ import asyncio
 import logging
 import signal
 import sys
+import inspect
 from functools import partial
-from .router import Router, Param
-from .protocol import HttpProtocol
-from .test_client import TestClient
-from .middleware import BaseMiddleware
-from .section import Section
-from .exceptions import *
-from .response import json, Response
+from misuzu.router import Router, Param
+from misuzu.protocol import HttpProtocol
+from misuzu.test_client import TestClient
+from misuzu.section import Section
+from misuzu.exceptions import *
+from misuzu.utils import is_middleware
 
 try:
     import uvloop
@@ -21,19 +21,68 @@ __all__ = ['Misuzu']
 
 class Misuzu(object):
 
-    def __init__(self, name):
-        """
-        初始化 Misuzu 类
-        :param name: APP 名称， 并没有什么用
-        """
+    def __init__(self, name=None):
+
         self.name = name
         self.__test_client = None
         self.router = Router(self.name)
-        self.chains = []
+
+        self.config = {}
+        self.chain = []
 
         self.sections = {}
 
-        self.__temper_params = []
+    def use(self, middleware_or_section_name):
+        """
+        register middleware or section 
+        """
+        if isinstance(middleware_or_section_name, Section):
+            # register section
+            section = middleware_or_section_name
+            if section.name in self.sections:
+                raise MisuzuRuntimeError("it seems that this section's name had been registered")
+            logging.debug("register section {}".format(section.name))
+            self.sections[section.name] = section
+
+            self.router.union(section.router)
+        elif inspect.isfunction(middleware_or_section_name):
+            # register middleware
+            is_middleware(middleware_or_section_name)
+            middleware = middleware_or_section_name
+            self.chain.insert(0, middleware)
+        else:
+            raise MisuzuRuntimeError("misuzu only can use section instance or middleware function")
+
+    async def handler(self, context, handler_future):
+
+        try:
+            # find route
+            route = self.router.get(context)
+            if not route:
+                raise HttpException(None, 404)
+
+            section = self.sections.get(route.section_name)
+            context.generate_params(route)
+
+            handler = partial(section.handler, context=context, route=route)
+
+            for middleware in self.chain:
+                handler = partial(middleware, context=context, next=handler)
+
+            await handler()
+
+        except HttpException as e:
+
+            context.status = e.status
+            context.res = e.body
+
+        handler_future.set_result(context)
+
+    @property
+    def test(self):
+        if not self.__test_client:
+            return TestClient(self)
+        return self.__test_client
 
     def run(self, host="127.0.0.1", port=8000, debug=False, loop=None):
         # Create Event Loop
@@ -62,71 +111,3 @@ class Misuzu(object):
 
     def stop(self):
         asyncio.get_event_loop().stop()
-
-    @property
-    def test(self):
-        if not self.__test_client:
-            return TestClient(self)
-        return self.__test_client
-
-    def register_middleware(self, middleware):
-        """
-        注册 Middleware
-        :param middleware:
-        :return:
-        """
-        if BaseMiddleware not in middleware.__bases__:
-            raise UnknownMiddlewareException()
-
-        self.chains.append(middleware)
-
-    def register_section(self, section):
-        if not isinstance(section, Section):
-            raise UnknownSectionException()
-
-        if section.name in self.sections:
-            raise MisuzuRuntimeError("it seems that this section's name had been registered")
-
-        logging.debug("register section {}".format(section.name))
-        self.sections[section.name] = section
-
-        # TODO add router
-        self.router.union(section.router)
-
-    async def handler(self, request, handler_future):
-
-        temp_middlewares= []
-
-        # find route
-        route = self.router.get(request.url, request.method)
-        section = self.sections.get(route.section_name)
-        request.generate_params(route)
-
-        try:
-            # Request Middleware
-            for middleware in self.chains:
-                temp = middleware()
-                temp_middlewares.append(temp)
-                temp.on_request(request)
-
-            if section:
-                response = await section.handler(request, route)
-            else:
-                response = await route.handler(request)
-
-            # if not return Response's instance, then json it
-            if not isinstance(response, Response):
-                response = json(response)
-
-            # Response Middleware
-            temp_middlewares.reverse()
-            for middleware in temp_middlewares:
-                middleware.on_response(response)
-
-        except HttpException as e:
-
-            response = Response(e.body, e.status)
-
-        # TODO Redirect
-
-        handler_future.set_result(response)

@@ -1,7 +1,8 @@
-from .router import Router
-from .middleware import BaseMiddleware
-from .exceptions import *
-from .response import Response, json
+import inspect
+from functools import partial
+from misuzu.router import Router
+from misuzu.exceptions import *
+from misuzu.utils import is_middleware
 
 
 __all__ = ['Section']
@@ -13,7 +14,7 @@ class Section:
         self.name = name
         self.router = Router(self.name)
         self.__temper_params = []
-        self.chains = []
+        self.chain = []
 
     def __route(self, url, method):
         """
@@ -81,37 +82,28 @@ class Section:
 
         return response
 
-    def register_middleware(self, middleware):
+    def use(self, middleware):
         """
-        注册 Middleware
-        :param middleware:
+        register Middleware
         """
-        if BaseMiddleware not in middleware.__bases__:
-            raise UnknownMiddlewareException()
+        if inspect.isfunction(middleware):
+                is_middleware(middleware)
+                self.chain.insert(0, middleware)
+        else:
+            raise MisuzuRuntimeError("section only can use middleware function")
 
-        self.chains.append(middleware)
+    async def handler(self, context, route):
 
-    async def handler(self, request, route):
+        async def ret_handler(context, next):
+            ret = await next()
+            # TODO handle different type of ret: json, text, html
+            context.res = ret
 
-        temp_middlewares = []
+        handler = route.handler
+        handler = partial(handler, ctx=context)
+        handler = partial(ret_handler, context=context, next=handler)
 
-        # Request Middleware
-        for middleware in self.chains:
-            temp = middleware()
-            temp_middlewares.append(temp)
-            temp.on_request(request)
+        for middleware in self.chain:
+            handler = partial(middleware, context=context, next=handler)
 
-        response = await route.handler(request)
-
-        # if not return Response's instance, then json it
-        if not isinstance(response, Response):
-            response = json(response)
-
-        # Response Middleware
-        temp_middlewares.reverse()
-        for middleware in temp_middlewares:
-            middleware.on_response(response)
-
-        return response
-
-
+        await handler()
