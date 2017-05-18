@@ -1,4 +1,4 @@
-from .exceptions import HttpException
+from misuzu.exceptions import HttpException
 
 __all__ = ['STATUS_CODES', 'abort']
 STATUS_CODES = {

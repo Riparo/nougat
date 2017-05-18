@@ -6,7 +6,16 @@ class HttpException(Exception):
         self.status = status
 
 
-class UnknownMiddlewareException(Exception): pass
+class UnknownMiddlewareException(Exception):
+
+    def __init__(self, err=None):
+        if err:
+            self.err = err
+        else:
+            self.err = 'Unknown middleware exception'
+
+    def __str__(self):
+        return self.err
 
 
 class UnknownSectionException(Exception): pass
