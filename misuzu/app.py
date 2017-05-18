@@ -55,7 +55,6 @@ class Misuzu(object):
 
     async def handler(self, context, handler_future):
 
-        # TODO code factor
         try:
             # find route
             route = self.router.get(context)

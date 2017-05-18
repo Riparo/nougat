@@ -23,7 +23,7 @@ class Context(object):
 
         self.path = path.decode()  # e.g. /hello?a=1
 
-        path_parse = httptools.parse_url(path)
+        path_parse = httptools.parse_url(path)  # TODO use yarl to parse url
         self.url = path_parse.path  # e.g. /hello
         self.query_string = path_parse.query  # e.g. a=1
 
@@ -53,7 +53,6 @@ class Context(object):
         self.__init_query(self.query_string)
         self.__init__cookies()
 
-
     @property
     def content_type(self):
         """
@@ -61,13 +60,36 @@ class Context(object):
         """
         return self.headers.get('CONTENT_TYPE', '').lower()
 
-    def set_cookies(self, value):
-        # TODO set cookies
-        pass
+    def set_cookies(self, name, value, expires=None, domain=None, path=None, secure=False, http_only=False, same_site=None):
+        """
+        
+        :param name: cookies name
+        :param value: cookies value
+        :param expires: number of seconds until the cookie expires
+        :param domain: specifies those hosts to which the cookie will be sent
+        :param path: indicates a URL path that must exist in the requested resource before sending the Cookie header
+        :param secure: a secure cookie will only be sent to the server when a request is made using SSL and the HTTPS protocol 
+        :param http_only: 
+        :param same_site: 
+        :return: 
+        """
 
-    def set_secret_cookies(self, value):
-        # TODO set secret cookies
-        pass
+        header_value = "{}={}".format(name, value)
+
+        if expires:
+            header_value = "{}; Max-Age={}".format(header_value, expires)
+        if domain:
+            header_value = "{}; Domain={}".format(header_value, domain)
+        if path:
+            header_value = "{}; Path={}".format(header_value, path)
+        if secure:
+            header_value = "{}; Secure".format(header_value)
+        if http_only:
+            header_value = "{}; HttpOnly".format(header_value)
+        if same_site:
+            header_value = "{}; SameSite={}".format(header_value, same_site)
+
+        self.set("Set-Cookie", header_value)
 
     def set(self, key, value):
         """
@@ -77,7 +99,6 @@ class Context(object):
         """
 
         self.res_header[key] = value
-
 
     def url_for(self, name, **kwargs):
         """
@@ -134,23 +155,23 @@ class Context(object):
         # TODO format the output
         body = body_bytes(self.res or STATUS_CODES.get(self.status, 'FAIL'))
 
-        playload = []
+        payload = []
 
         # HTTP STATUS
-        playload.append('HTTP/{} {} {}\r\n'.format(self.__version, self.status, STATUS_CODES.get(self.status, 'FAIL')).encode('latin-1'))
+        payload.append('HTTP/{} {} {}\r\n'.format(self.__version, self.status, STATUS_CODES.get(self.status, 'FAIL')).encode('latin-1'))
 
         # CONTENT TYPE AND LENGTH
-        playload.append('Content-Type: {}\r\n'.format(self.type).encode('latin-1'))
-        playload.append('Content-Length: {}\r\n'.format(len(body)).encode('latin-1'))
+        payload.append('Content-Type: {}\r\n'.format(self.type).encode('latin-1'))
+        payload.append('Content-Length: {}\r\n'.format(len(body)).encode('latin-1'))
 
         # HEADERS OF LOCATION OR COOKIES
-        playload.extend(self.__build_response_headers())
+        payload.extend(self.__build_response_headers())
 
         # RESPONSE BODY
-        playload.append(b'\r\n')
-        playload.append(body)
+        payload.append(b'\r\n')
+        payload.append(body)
 
-        return b''.join(playload)
+        return b''.join(payload)
 
     def __init_ip(self, ip):
         """
