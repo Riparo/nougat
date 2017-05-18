@@ -1,6 +1,7 @@
 import aiohttp
 import asyncio
 from functools import partial
+from yarl import URL
 from misuzu.protocol import HttpProtocol
 try:
     import uvloop
@@ -99,4 +100,4 @@ class TestClient:
         generate the abstract url for test case
         """
 
-        return 'http://{}:{}{}'.format(HOST, PORT, path)
+        return URL('http://{}:{}{}'.format(HOST, PORT, path))
