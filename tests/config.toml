@@ -1,0 +1,9 @@
+title = "TOML Example"
+
+[user]
+path = "ENV::HOME::STR::/"
+count = 1979
+
+[user.name]
+firstname = "ENV::HOMES::BOOL::/"
+secondname = "ENV::HOMES::STR::/"
