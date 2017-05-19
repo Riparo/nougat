@@ -33,7 +33,8 @@ setup_kwargs = {
         'httptools>=0.0.9',
         'uvloop>=0.8.0',
         'aiofiles>=0.3.0',
-        'aiohttp>=2.0.7'
+        'aiohttp>=2.0.7',
+        'toml>=0.9.2'
     ],
 }
 try:
