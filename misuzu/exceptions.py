@@ -6,6 +6,18 @@ class HttpException(Exception):
         self.status = status
 
 
+class ConfigException(Exception):
+
+    def __init__(self, err=None):
+        if err:
+            self.err = err
+        else:
+            self.err = 'Config is nonstandard'
+
+    def __str__(self):
+        return "Format : 'ENV::<name>::<type>::<default_value>'\n" + self.err
+
+
 class UnknownMiddlewareException(Exception):
 
     def __init__(self, err=None):
