@@ -56,6 +56,8 @@ class Router:
         for param in params:
             this_route.add_param(**param)
 
+        return this_route
+
     def __is_dynamic(self, rule):
         """
         判断路由是否动态
@@ -143,7 +145,11 @@ class Route:
         """
         向规则中添加参数
         """
-        self.params.append(Param(name, type, **kwargs))
+        # TODO param's name is redefined
+        self.params[name] = Param(name, type, **kwargs)
+
+    def url(self, **kwargs):
+        pass
 
 
 class DynamicRoute(Route):
@@ -156,7 +162,7 @@ class DynamicRoute(Route):
         self.handler = handler
         self.section_name = section_name
         self.pattern = re.compile(pattern)
-        self.params = []
+        self.params = {}
         self.url_params_dict = {}
 
     def match(self, url):
@@ -168,6 +174,27 @@ class DynamicRoute(Route):
 
         return None
 
+    def url(self, **kwargs):
+        url_ret = self.rule
+        for key, _ in self.url_params_dict.items():
+            value = kwargs.get(key, None)
+            if not value:
+                _param = self.params.get(key, None)
+                if _param:
+                    value = _param.default
+
+
+            if not value:
+                raise Exception()  # TODO param miss exception
+
+            url_ret = url_ret.replace("<{}>".format(key), value)
+            kwargs.pop(key)
+
+        if kwargs:
+            url_ret = "{}?{}".format(url_ret, "&".join(["{}={}".format(key, value) for key, value in kwargs.items()]))
+
+        return url_ret
+
 
 class StaticRoute(Route):
     """
@@ -178,3 +205,9 @@ class StaticRoute(Route):
         self.handler = handler
         self.section_name = section_name
         self.params = []
+
+    def url(self, **kwargs):
+        url_ret = self.rule
+        if kwargs:
+            url_ret = "{}?{}".format(url_ret, "&".join(["{}={}".format(key, value) for key, value in kwargs.items()]))
+        return url_ret

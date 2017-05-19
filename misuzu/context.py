@@ -107,7 +107,20 @@ class Context(object):
         :return: the url string
         """
         # TODO url for function
-        pass
+        _name_split = name.split(".")
+
+        if len(_name_split) != 2:
+            raise Exception()  # TODO new exception
+
+        section_name, handler_name = _name_split
+        section = self.app.sections.get(section_name, None)
+
+        if not section:
+            raise Exception()  # TODO ne exception
+
+        route = section.get_route_by_name(handler_name)
+
+        return route.url(**kwargs)
 
     def redirect(self, url):
         """

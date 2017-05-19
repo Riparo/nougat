@@ -15,6 +15,7 @@ class Section:
         self.router = Router(self.name)
         self.__temper_params = []
         self.chain = []
+        self.__handler = {}
 
     def __route(self, url, method):
         """
@@ -23,10 +24,20 @@ class Section:
         :param method: HTTP 访问方法
         """
         def response(handler):
-            self.router.add(url, handler, self.name, method, self.__temper_params)
+            # TODO check handler name with multiple define
+            if handler.__name__ in self.__handler:
+                raise Exception()  # TODO new exception
+            route = self.router.add(url, handler, self.name, method, self.__temper_params)
+            self.__handler[handler.__name__] = route
             self.__temper_params = []  # reset temper params
             return handler
         return response
+
+    def get_route_by_name(self, handler_name):
+        """
+        get route by its handler name
+        """
+        return self.__handler.get(handler_name, None)
 
     def head(self, url):
         return self.__route(url, "HEAD")
