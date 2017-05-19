@@ -1,9 +1,10 @@
 import toml
 import os
 import re
+from .utils import is_env_format
 
 
-env_pattern = "ENV::(?P<name>[a-zA-Z]+)::(?P<type>[A-Z]+)(::(?P<default>.*))?$"
+env_pattern = "ENV::(?P<name>[0-9a-zA-Z]+)::(?P<type>[a-zA-Z]+)(::(?P<default>.*))?$"
 
 
 class Config(dict):
@@ -21,22 +22,38 @@ class Config(dict):
         self[key] = value
 
     def is_env(self, value):
-        # error : "<name>'{}' is lowercase.".format(match.group('name'))
-        # error : "<type>'{}' is out of list {}".format(match.group('type'), RARAM_GENERATOR.keys())
+        """
+        Judge the value adhere the format
+        :param value: the value from the Config dict
+        :return: (Boolean, match object)
+        """
         if isinstance(value, str):
             match = re.match(env_pattern, value)
             if match:
+                is_env_format(match, PARAM_GENERATOR)
                 return True, match
         return False, None
 
     def get_env(self, match):
+        """
+        Get value from system environment variable
+        if non-existent, setting the value to default
+        and convert to variable type given
+        :param match: the object returned by function re.match
+        :return: 
+        """
         ret = os.environ.get(match.group('name'), match.group('default'))
         if ret:
-            into = PARAM_GENERATOR[match.group('type')]
+            into = PARAM_GENERATOR[match.group('type').upper()]
             ret = into(ret)
             return ret
 
     def check_dict(self, value):
+        """
+        Setting the value, if it conform the format
+        :param value: the value from the Config dict
+        :return: 
+        """
         if isinstance(value, dict):
             for each in value:
                 is_environ, is_param = self.is_env(value[each])
@@ -45,6 +62,12 @@ class Config(dict):
                 self.check_dict(value[each])
 
     def load(self, file):
+        """
+        Traversing the dict from the toml file
+        Set all value that conform to the format
+        :param file: 
+        :return: 
+        """
         with open(file) as cfile:
             config = toml.loads(cfile.read())
         self.check_dict(config)
