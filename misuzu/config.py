@@ -80,7 +80,7 @@ class Config(dict):
         :param file: 
         :return: 
         """
-        with open(file) as cfile:
+        with open(file, 'r') as cfile:
             config = toml.loads(cfile.read())
         self.check_dict(config)
         self.update(config)
