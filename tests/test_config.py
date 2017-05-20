@@ -46,3 +46,25 @@ def test_no_capitalized(tmpdir):
         t = tmpdir.mkdir("sub").join("config.toml")
         t.write("home = 'ENV::Home::STR::/'")
         app.config.load(t)
+
+
+def test_exist_type_func():
+    with pytest.raises(ConfigException):
+        app = Misuzu("test")
+
+        def into():
+            pass
+        app.config.use("STR", into)
+
+
+def test_add_type(tmpdir):
+    def double(value):
+        return False, value
+
+    app = Misuzu("test")
+    t = tmpdir.mkdir("sub").join("config.toml")
+    t.write("home = 'ENV::HOME::DOUBLE'")
+    app.config.use("DOUBLE", double)
+    app.config.load(t)
+    p = (False, os.environ.get("HOME"))
+    assert app.config == {'home': p}
