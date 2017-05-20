@@ -10,6 +10,7 @@ from misuzu.test_client import TestClient
 from misuzu.section import Section
 from misuzu.exceptions import *
 from misuzu.utils import is_middleware
+from misuzu.config import Config
 
 try:
     import uvloop
@@ -27,7 +28,7 @@ class Misuzu(object):
         self.__test_client = None
         self.router = Router(self.name)
 
-        self.config = {}
+        self.config = Config()
         self.chain = []
 
         self.sections = {}

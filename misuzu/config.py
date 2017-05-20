@@ -2,6 +2,7 @@ import toml
 import os
 import re
 from .utils import is_env_format
+from .exceptions import ConfigException
 
 
 env_pattern = "ENV::(?P<name>[0-9a-zA-Z]+)::(?P<type>[a-zA-Z]+)(::(?P<default>.*))?$"
@@ -99,4 +100,3 @@ PARAM_GENERATOR = {
     'INT': into_int,
     'BOOL': into_bool
 }
-# TODO load config from file and object
