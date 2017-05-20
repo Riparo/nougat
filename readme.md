@@ -1,15 +1,14 @@
-# Misuzu
-**NOTICE: this project is still  a prototype, make sure what you do for each step you do**
+# misuzu
 
-Misuzu is an async framework which focus on best writing experience of API. The key features are the human friendly params definition, which is divided from the method's logic, and the automatic documents.
+[![PyPI](https://img.shields.io/pypi/pyversions/misuzu.svg)]() [![PyPI](https://img.shields.io/pypi/status/misuzu.svg)]() [![PyPI](https://img.shields.io/pypi/v/misuzu.svg)]() [![PyPI](https://img.shields.io/pypi/l/misuzu.svg)]() [![CircleCI branch](https://img.shields.io/circleci/project/github/Kilerd/misuzu/master.svg)]()
 
+an asynchronous framework which focus on best writing experience of API. The key features are the human friendly definition of parameters, which is divided from the method's logic, and the automatic documents.
 
+## installation
 
-## Support
-
-Python 3.5 or newer
-
-uvloop, which is the basement of misuzu for providing fast async event loop, is linux only, would be replace with asyncio in windows.
+```bash
+pip install misuzu
+```
 
 ## hello world
 
@@ -20,22 +19,19 @@ app = Misuzu(__name__)
 main = Section('main')
 
 @main.get("/")
-async def index_get(request):
-    return {"test": "hello world"}
+async def index_get(ctx):
+    return "123"
 
-app.register_section(main)
-app.run()
+app.use(main)
+app.run(port=8000)
 ```
+
+then, open http://127.0.0.1:8000, you can see the `123`
 
 ## Document
 
-coming soon.
+click [here](https://kilerd.github.io/misuzu/#/) to see document.
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](https://github.com/Kilerd/misuzu/blob/master/LICENSE) file for details
-
-## Acknowledgments
-
-- uvloop
-- httptools
+This project is licensed under the MIT License - see the [LICENSE](https://github.com/Kilerd/misuzu/blob/master/LICENSE) file for details.
