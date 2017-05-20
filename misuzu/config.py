@@ -2,6 +2,7 @@ import toml
 import os
 import re
 from .utils import is_env_format
+from .exceptions import ConfigException
 
 
 env_pattern = "ENV::(?P<name>[0-9a-zA-Z]+)::(?P<type>[a-zA-Z]+)(::(?P<default>.*))?$"
@@ -61,6 +62,17 @@ class Config(dict):
                     value[each] = self.get_env(is_param)
                 self.check_dict(value[each])
 
+    def use(self, name, func):
+        """
+        register the function
+        :param name: key of dict
+        :param func: custom function for transforming type of data
+        :return: 
+        """
+        if PARAM_GENERATOR.get(name.upper(), None):
+            raise ConfigException("function {}:{} exist".format(name, func.__name__))
+        PARAM_GENERATOR[name.upper()] = func
+
     def load(self, file):
         """
         Traversing the dict from the toml file
@@ -99,4 +111,3 @@ PARAM_GENERATOR = {
     'INT': into_int,
     'BOOL': into_bool
 }
-# TODO load config from file and object
