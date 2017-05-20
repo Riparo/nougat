@@ -62,6 +62,17 @@ class Config(dict):
                     value[each] = self.get_env(is_param)
                 self.check_dict(value[each])
 
+    def use(self, name, func):
+        """
+        register the function
+        :param name: key of dict
+        :param func: custom function for transforming type of data
+        :return: 
+        """
+        if PARAM_GENERATOR.get(name.upper(), None):
+            raise ConfigException("function {}:{} exist".format(name, func.__name__))
+        PARAM_GENERATOR[name.upper()] = func
+
     def load(self, file):
         """
         Traversing the dict from the toml file
