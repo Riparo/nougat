@@ -59,12 +59,12 @@ def test_exist_type_func():
 
 def test_add_type(tmpdir):
     def double(value):
-        return False, value
+        return False, str(value)
 
     app = Misuzu("test")
     t = tmpdir.mkdir("sub").join("config.toml")
-    t.write("home = 'ENV::HOME::DOUBLE'")
+    t.write("home = 'ENV::HOME::DOUBLE::123'")
     app.config.use("DOUBLE", double)
     app.config.load(t)
-    p = (False, os.environ.get("HOME"))
+    p = (False, os.environ.get("HOME", '123'))
     assert app.config == {'home': p}
