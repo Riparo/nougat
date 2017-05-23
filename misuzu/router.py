@@ -51,6 +51,11 @@ class Router:
         else:
 
             this_route = StaticRoute(rule, handler, section_name)
+
+            # raise rule redefine
+            if rule in self.fixed_routes[method]:
+                raise RouteReDefineException(method, rule)
+
             self.fixed_routes[method][rule] = this_route
 
         for param in params:
