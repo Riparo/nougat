@@ -68,7 +68,7 @@ class Misuzu(object):
             handler = partial(section.handler, context=context, route=route)
 
             for middleware in self.chain:
-                handler = partial(middleware, context=context, next=handler)
+                handler = partial(middleware, ctx=context, next=handler)
 
             await handler()
 

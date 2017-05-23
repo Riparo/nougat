@@ -104,16 +104,16 @@ class Section:
 
     async def handler(self, context, route):
 
-        async def ret_handler(context, next):
+        async def ret_handler(ctx, next):
             ret = await next()
             # TODO handle different type of ret: json, text, html
-            context.res = ret
+            ctx.res = ret
 
         handler = route.handler
         handler = partial(handler, ctx=context)
-        handler = partial(ret_handler, context=context, next=handler)
+        handler = partial(ret_handler, ctx=context, next=handler)
 
         for middleware in self.chain:
-            handler = partial(middleware, context=context, next=handler)
+            handler = partial(middleware, ctx=context, next=handler)
 
         await handler()
