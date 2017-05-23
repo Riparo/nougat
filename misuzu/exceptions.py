@@ -50,3 +50,13 @@ class MisuzuRuntimeError(Exception):
 
     def __init__(self, text=""):
         self.text = text
+
+
+class HandlerRedefineException(Exception):
+
+    def __init__(self, section, handler):
+        self.section =section
+        self.handler = handler
+
+    def __str__(self):
+        return "{} handler seems redefine in section {}".format(self.handler, self.section)

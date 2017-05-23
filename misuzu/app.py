@@ -41,7 +41,7 @@ class Misuzu(object):
             # register section
             section = middleware_or_section_name
             if section.name in self.sections:
-                raise MisuzuRuntimeError("it seems that this section's name had been registered")
+                raise MisuzuRuntimeError("it seems that this section's name had been used")
             logging.debug("register section {}".format(section.name))
             self.sections[section.name] = section
 
