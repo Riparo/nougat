@@ -1,5 +1,6 @@
 import re
-from misuzu.exceptions import UnknownRouterException, RouteReDefineException
+from misuzu.exceptions import UnknownRouterException, RouteReDefineException, \
+    ParamMissingException, ParamRedefineException
 from misuzu.httpstatus import abort
 
 
@@ -85,8 +86,6 @@ class Router:
         :return: Route 类
         """
 
-        # TODO refactor
-
         method = context.method
         url = context.path
 
@@ -143,14 +142,15 @@ class Route:
     """
     rule = None
     handler = None
-    params = []
+    params = {}
     section_name = ''
 
     def add_param(self, name, type, **kwargs):
         """
         向规则中添加参数
         """
-        # TODO param's name is redefined
+        if name in self.params:
+            raise ParamRedefineException(self.rule, name)
         self.params[name] = Param(name, type, **kwargs)
 
     def url(self, **kwargs):
@@ -209,7 +209,7 @@ class StaticRoute(Route):
         self.rule = rule
         self.handler = handler
         self.section_name = section_name
-        self.params = []
+        self.params = {}
 
     def url(self, **kwargs):
         url_ret = self.rule

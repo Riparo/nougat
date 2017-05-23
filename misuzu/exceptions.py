@@ -60,3 +60,23 @@ class HandlerRedefineException(Exception):
 
     def __str__(self):
         return "{} handler seems redefine in section {}".format(self.handler, self.section)
+
+
+class ParamRedefineException(Exception):
+
+    def __init__(self, rule, name):
+        self.rule = rule
+        self.name = name
+
+    def __str__(self):
+        return "{} seems redefine param named {}".format(self.rule, self.name)
+
+
+class ParamMissingException(Exception):
+
+    def __init__(self, rule, name):
+        self.rule = rule
+        self.name = name
+
+    def __str__(self):
+        return "{} seems miss param named {}".format(self.rule, self.name)
