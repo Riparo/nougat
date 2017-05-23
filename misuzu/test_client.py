@@ -34,9 +34,9 @@ class TestClient:
 
         ret = Proxy()
 
-        async def test_middleware(context, next):
+        async def test_middleware(ctx, next):
             await next()
-            context.app.ctx = context
+            ctx.app.ctx = ctx
 
         def response_builder(_ret):
             def _response(future):
