@@ -1,6 +1,6 @@
 # misuzu
 
-[![PyPI](https://img.shields.io/pypi/pyversions/misuzu.svg)]() [![PyPI](https://img.shields.io/pypi/status/misuzu.svg)]() [![PyPI](https://img.shields.io/pypi/v/misuzu.svg)]() [![PyPI](https://img.shields.io/pypi/l/misuzu.svg)]() [![CircleCI branch](https://img.shields.io/circleci/project/github/Kilerd/misuzu/master.svg)]()
+![PyPI](https://img.shields.io/pypi/pyversions/misuzu.svg) ![PyPI](https://img.shields.io/pypi/status/misuzu.svg) ![PyPI](https://img.shields.io/pypi/v/misuzu.svg) ![PyPI](https://img.shields.io/pypi/l/misuzu.svg) ![CircleCI branch](https://img.shields.io/circleci/project/github/Kilerd/misuzu/master.svg)
 
 an asynchronous framework which focus on best writing experience of API. The key features are the human friendly definition of parameters, which is divided from the method's logic, and the automatic documents.
 
@@ -30,7 +30,7 @@ then, open http://127.0.0.1:8000, you can see the `123`
 
 ## Document
 
-click [here](https://kilerd.github.io/misuzu/#/) to see document.
+click [here](https://kilerd.github.io/misuzu/) to see document.
 
 ## License
 
