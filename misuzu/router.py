@@ -42,11 +42,17 @@ class Router:
         :param method: 请求方法
         :param params: Param 列表
         """
-        is_dynamic, match_pattern = self.__is_dynamic(rule)
+        is_dynamic, match_pattern, url_params = self.__is_dynamic(rule)
 
         if is_dynamic:
+            this_route = DynamicRoute(rule, handler, section_name, match_pattern, url_params)
 
-            this_route = DynamicRoute(rule, handler, section_name, match_pattern)
+            # param missing check
+            params_key = [param.name for param in params]
+            x = [param for param in this_route.url_params if param not in params_key]
+            if x:
+                raise ParamMissingException(rule, x[0])
+
             self.dynamic_routes[method].append(this_route)
 
         else:
@@ -73,11 +79,16 @@ class Router:
         match = self.__dynamic_pattern.findall(rule)
         if match:
             ret = rule
+            params = []
             for param in match:
                 ret = ret.replace(param[0], "(?P<{}>[^/]+)".format(param[1]))
-            return True, ret
+                if param[1] in params:
+                    raise ParamRedefineException(rule, param[1])
 
-        return False, rule
+                params.append(param[1])
+            return True, ret, params
+
+        return False, rule, None
 
     def get(self, context):
         """
@@ -162,12 +173,13 @@ class DynamicRoute(Route):
     动态路由规则
     """
 
-    def __init__(self, rule, handler, section_name, pattern):
+    def __init__(self, rule, handler, section_name, pattern, url_params):
         self.rule = rule
         self.handler = handler
         self.section_name = section_name
         self.pattern = re.compile(pattern)
         self.params = {}
+        self.url_params = url_params
         self.url_params_dict = {}
 
     def match(self, url):
