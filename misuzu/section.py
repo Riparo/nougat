@@ -1,7 +1,7 @@
 import inspect
 from functools import partial
 from misuzu.router import Router
-from misuzu.exceptions import *
+from misuzu.exceptions import HandlerRedefineException, MisuzuRuntimeError
 from misuzu.utils import is_middleware
 
 
@@ -24,9 +24,8 @@ class Section:
         :param method: HTTP 访问方法
         """
         def response(handler):
-            # TODO check handler name with multiple define
             if handler.__name__ in self.__handler:
-                raise Exception()  # TODO new exception
+                raise HandlerRedefineException(self.name, handler.__name__)
             route = self.router.add(url, handler, self.name, method, self.__temper_params)
             self.__handler[handler.__name__] = route
             self.__temper_params = []  # reset temper params
