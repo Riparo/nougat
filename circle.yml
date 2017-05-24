@@ -4,9 +4,11 @@ machine:
 
 dependencies:
   pre:
-    - pip install pytest httptools uvloop aiohttp aiofiles pytest-cov
+    - pip install pytest httptools uvloop aiohttp aiofiles pytest-cov codecov
     - python setup.py install
 
 test:
   override:
     - pytest --cov=misuzu
+  post:
+    - codecov
