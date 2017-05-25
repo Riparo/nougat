@@ -1,5 +1,6 @@
 import httptools
 import json
+from yarl import URL
 from urllib.parse import parse_qsl
 from nougat.httpstatus import STATUS_CODES
 from nougat.exceptions import HttpException
@@ -20,12 +21,7 @@ class Context(object):
 
         # base
         self.app = app
-
-        self.path = path.decode()  # e.g. /hello?a=1
-
-        path_parse = httptools.parse_url(path)  # TODO use yarl to parse url
-        self.url = path_parse.path  # e.g. /hello
-        self.query_string = path_parse.query  # e.g. a=1
+        self.url = URL(path.decode())
 
         self.__version = version  # http version
         self.method = method
@@ -37,7 +33,7 @@ class Context(object):
         self.ip = self.__init_ip(ip)
         self.req_body = {}
 
-        self.query = None
+        self.query = self.url.query
 
         self.json = None
 
@@ -50,7 +46,6 @@ class Context(object):
         self.res = None
         self.status = 200
 
-        self.__init_query(self.query_string)
         self.__init__cookies()
 
     @property
@@ -206,31 +201,6 @@ class Context(object):
                 if one_cookies != "":
                     one_cookies = one_cookies.split("=")
                     self.cookies[one_cookies[0]] = "=".join(one_cookies[1:])
-
-    def __init_query(self, query):
-        """
-        格式化 query 的内容
-        :param query:
-        :return:
-        """
-        if query:
-
-            querys = query.decode("utf-8").split("&")
-            for each_query in querys:
-                query_path = each_query.split("=")
-                if len(query_path) >= 2:
-                    self.__set_query(query_path[0], "=".join(query_path[1:]))
-
-    def __set_query(self, key, value):
-        if key in self.query:
-            if not isinstance(self.query[key], list):
-                temp = list()
-                temp.append(self.query[key])
-                self.query[key] = temp
-            self.query[key].append(value)
-
-        else:
-            self.query[key] = value
 
     def init_body(self, body):
         """

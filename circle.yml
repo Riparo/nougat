@@ -4,7 +4,7 @@ machine:
 
 dependencies:
   pre:
-    - pip install pytest httptools uvloop aiohttp aiofiles pytest-cov codecov
+    - pip install pytest httptools uvloop aiohttp aiofiles pytest-cov codecov toml
     - python setup.py install
 
 test:
