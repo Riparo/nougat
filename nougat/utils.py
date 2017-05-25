@@ -1,6 +1,6 @@
 import inspect
-from misuzu.exceptions import UnknownMiddlewareException
-from misuzu.exceptions import ConfigException
+from nougat.exceptions import UnknownMiddlewareException
+from nougat.exceptions import ConfigException
 
 
 def is_middleware(func):

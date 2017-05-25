@@ -1,25 +1,25 @@
 # 快速入门
 ## 安装
-!> PYTHON3 ONLY: misuzu 只支持 Python 3.5 及以后的版本
+!> PYTHON3 ONLY: nougat 只支持 Python 3.5 及以后的版本
 
-misuzu 寄托在 pypi 上，因此可以使用 `pip` 进行安装
+nougat 寄托在 pypi 上，因此可以使用 `pip` 进行安装
 ```bash
-pip install misuzu
+pip install nougat
 ```
 ### 安装 uvloop
 为了支持 windows，uvloop 是选择安装的，所以为了更好的性能体验，请执行以下指令安装 uvloop
 ```bash
 pip install uvloop
 ```
-### windows 下的 misuzu 
-因为 misuzu 是基于 `uvloop` 的，`uvloop` 又是 linux only 的，因此在 windows 环境下，会使用 `asyncio` 来代替 `uvloop`。 性能会下降，因此不建议在 windows 的生产环境下部署 misuzu。
+### windows 下的 nougat
+因为 nougat 是基于 `uvloop` 的，`uvloop` 又是 linux only 的，因此在 windows 环境下，会使用 `asyncio` 来代替 `uvloop`。 性能会下降，因此不建议在 windows 的生产环境下部署 nougat。
 
 ## 最小的使用
 
 ```python
-from misuzu import Misuzu, Section
+from nougat import nougat, Section
 
-app = Misuzu(__name__)
+app = Nougat(__name__)
 main = Section('main')
 
 @main.get("/<name>")
@@ -34,17 +34,17 @@ app.run()
 ## 调试模式
  TODO: watchdog
 
-## Section 和 Misuzu
-Misuzu 是整个应用的入口，它用于启动服务器和组织中间件(Middleware)和部件(Section)，它没有组织路由的功能。
+## Section 和 Nougat
+Nougat 是整个应用的入口，它用于启动服务器和组织中间件(Middleware)和部件(Section)，它没有组织路由的功能。
 
-Section，中文称部件。misuzu 项目是理应分部件处理的，因此在 Section 中可以组织模部件和中间件。写好的 section 必须要在 Misuzu 中注册才会生效： `app.register_section(section)`
+Section，中文称部件。nougat 项目是理应分部件处理的，因此在 Section 中可以组织模部件和中间件。写好的 section 必须要在 Nougat 中注册才会生效： `app.register_section(section)`
 
-**在文档中，`app` 指的是 `Misuzu` 实例，而 `sectiion` 指的是 `Section` 实例**
+**在文档中，`app` 指的是 `Nougat` 实例，而 `sectiion` 指的是 `Section` 实例**
 
 ## 路由系统
-在编写 API 时，权限是比较重要的一部分，尤其是在设计 RESTFUL API 时，因此 misuzu 提供了精准、优雅的路由定义方法。
+在编写 API 时，权限是比较重要的一部分，尤其是在设计 RESTFUL API 时，因此 nougat 提供了精准、优雅的路由定义方法。
 
-在 misuzu 中，允许用户定义大部分请求方法： `HEAD`, `GET`, `POST`, `PUT`, `DELETE`, `HEAD`, `PATCH`, `OPTIONS`。 每一种请求方法都对应着一个装饰器来绑定 URL
+在 nougat 中，允许用户定义大部分请求方法： `HEAD`, `GET`, `POST`, `PUT`, `DELETE`, `HEAD`, `PATCH`, `OPTIONS`。 每一种请求方法都对应着一个装饰器来绑定 URL
 ```python
 
 @section.get('/')
@@ -57,7 +57,7 @@ async def index_post(request):
 ```
 
 ### 带参数的路由
-简单来说，不同于那些实用正则表达式作为路由项目的 web 框架来说，misuzu 提供了一个简单的路由定义方式，只需要在路由中以尖括号`<param_name>`括起来，然后使用`@section.param()`装饰器对该变量进行详细的描述即可。（当然，如果你只定义不使用该变量，那么不需要使用`@section.param()`描述该变量）
+简单来说，不同于那些实用正则表达式作为路由项目的 web 框架来说，nougat 提供了一个简单的路由定义方式，只需要在路由中以尖括号`<param_name>`括起来，然后使用`@section.param()`装饰器对该变量进行详细的描述即可。（当然，如果你只定义不使用该变量，那么不需要使用`@section.param()`描述该变量）
 
 以下是一个简单的例子（如同 HELLO WORLD）
 ```python
@@ -69,7 +69,7 @@ async def index(request):
 以上例子，在 URL 中接受一个叫`name`的参数，并且尝试格式化为 `str` 类型，如果格式化成功（没有报异常），那么可以使用`request.params.name` (通用的是`request.params.param_name`) 得到参数内容。
 
 ## 参数定义
-不同于其他 web 框架， misuzu 把参数的定义提到了 handler 前面，并且使用`@section.param()`装饰器语法来实现，这样可以：
+不同于其他 web 框架， nougat 把参数的定义提到了 handler 前面，并且使用`@section.param()`装饰器语法来实现，这样可以：
  - 逻辑代码和参数定义代码分离，更加清晰明了
  - 代码更加 Pythonic
 
@@ -90,7 +90,7 @@ async def index(request):
 ## 重定向 和 HTTP 错误
 
 ### 如何返回自定义的 HTTP CODE
-misuzu 提供了 `abort` 来返回自定义 HTTP CODE
+nougat 提供了 `abort` 来返回自定义 HTTP CODE
 
 `abort` 接受两个参数：
  - `status` 是返回的 HTTP CODE
@@ -110,14 +110,13 @@ misuzu 提供了 `abort` 来返回自定义 HTTP CODE
 若需要返回其他类型的响应，可以引入 `Response` 类，直接设定 `Response` 的返回内容
 
 ### 更好的 JSON 的返回
-对于 JSON 的返回内容， misuzu 提供了另外一种更加简便的返回方式
+对于 JSON 的返回内容， nougat 提供了另外一种更加简便的返回方式
 ```python
 @section.get("/")
 async def index(request):
     return {"hello":"world"}
 ```
 如上述代码，你可以直接返回 `dict` 或 `list` 类型的内容。
-
-misuzu 在处理返回值时，会判断返回值是否`Response`的实例，若不是，将会调用上述描述的 `json` 方法进行格式化返回值
+nougat 在处理返回值时，会判断返回值是否`Response`的实例，若不是，将会调用上述描述的 `json` 方法进行格式化返回值
 
 ## 使用 nginx 部署

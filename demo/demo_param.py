@@ -1,6 +1,6 @@
-from misuzu import Misuzu, Section
+from nougat import Nougat, Section
 
-app = Misuzu(__name__)
+app = Nougat(__name__)
 main = Section('main')
 
 @main.get("/<name>")

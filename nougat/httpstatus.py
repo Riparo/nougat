@@ -1,4 +1,4 @@
-from misuzu.exceptions import HttpException
+from nougat.exceptions import HttpException
 
 __all__ = ['STATUS_CODES', 'abort']
 STATUS_CODES = {

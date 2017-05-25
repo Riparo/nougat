@@ -1,9 +1,9 @@
-from misuzu import Misuzu, Section
+from nougat import Nougat, Section
 
 
 def test_redirect():
 
-    app = Misuzu()
+    app = Nougat()
     main = Section("test")
 
     @main.get("/")

@@ -46,7 +46,7 @@ class RouteReDefineException(Exception):
         return "{} {} seems been redefined".format(self.method, self.url)
 
 
-class MisuzuRuntimeError(Exception):
+class NougatRuntimeError(Exception):
 
     def __init__(self, text=""):
         self.text = text

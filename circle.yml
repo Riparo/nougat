@@ -9,6 +9,6 @@ dependencies:
 
 test:
   override:
-    - pytest --cov=misuzu
+    - pytest --cov=nougat
   post:
     - codecov

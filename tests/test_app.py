@@ -1,24 +1,24 @@
-from misuzu import Misuzu, Section
-from misuzu.exceptions import MisuzuRuntimeError, UnknownSectionException
+from nougat import Nougat, Section
+from nougat.exceptions import NougatRuntimeError, UnknownSectionException
 import json
 import pytest
 
 
 def test_use_not_section_instance():
-    with pytest.raises(MisuzuRuntimeError):
-        app = Misuzu("test")
-        app.use(Misuzu())
+    with pytest.raises(NougatRuntimeError):
+        app = Nougat("test")
+        app.use(Nougat())
 
 
 def test_use_section():
-    app = Misuzu("test")
+    app = Nougat("test")
     app.use(Section("test"))
 
     assert len(app.sections) == 1
 
 
 def test_get():
-    app = Misuzu()
+    app = Nougat()
 
     main = Section("main")
 
@@ -33,7 +33,7 @@ def test_get():
 
 
 def test_post():
-    app = Misuzu()
+    app = Nougat()
 
     main = Section("main")
 

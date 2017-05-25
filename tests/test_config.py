@@ -1,11 +1,11 @@
 import pytest
-from misuzu import Misuzu
-from misuzu.config import *
-from misuzu.utils import *
+from nougat import Nougat
+from nougat.config import *
+from nougat.utils import *
 
 
 def test_get_env(tmpdir):
-    app = Misuzu("test")
+    app = Nougat("test")
     t = tmpdir.mkdir("sub").join("config.toml")
     t.write("home = 'ENV::HOME::STR'")
     app.config.load(t.strpath)
@@ -14,7 +14,7 @@ def test_get_env(tmpdir):
 
 
 def test_nested_dict(tmpdir):
-    app = Misuzu("test")
+    app = Nougat("test")
     t = tmpdir.mkdir("sub").join("config.toml")
     t.write("[a]\naa = 1\n[a.b]\nbb = 2")
     app.config.load(t.strpath)
@@ -25,7 +25,7 @@ def test_nested_dict(tmpdir):
 
 
 def test_no_env(tmpdir):
-    app = Misuzu("test")
+    app = Nougat("test")
     t = tmpdir.mkdir("sub").join("config.toml")
     t.write("home = 'ENV::HOMES::STR::/'")
     app.config.load(t.strpath)
@@ -34,7 +34,7 @@ def test_no_env(tmpdir):
 
 def test_no_type(tmpdir):
     with pytest.raises(ConfigException):
-        app = Misuzu("test")
+        app = Nougat("test")
         t = tmpdir.mkdir("sub").join("config.toml")
         t.write("home = 'ENV::HOME::SSS::/'")
         app.config.load(t.strpath)
@@ -42,7 +42,7 @@ def test_no_type(tmpdir):
 
 def test_no_capitalized(tmpdir):
     with pytest.raises(ConfigException):
-        app = Misuzu("test")
+        app = Nougat("test")
         t = tmpdir.mkdir("sub").join("config.toml")
         t.write("home = 'ENV::Home::STR::/'")
         app.config.load(t.strpath)
@@ -50,7 +50,7 @@ def test_no_capitalized(tmpdir):
 
 def test_exist_type_func():
     with pytest.raises(ConfigException):
-        app = Misuzu("test")
+        app = Nougat("test")
 
         def into():
             pass
@@ -61,7 +61,7 @@ def test_add_type(tmpdir):
     def double(value):
         return False, str(value)
 
-    app = Misuzu("test")
+    app = Nougat("test")
     t = tmpdir.mkdir("sub").join("config.toml")
     t.write("home = 'ENV::HOME::DOUBLE::123'")
     app.config.use("DOUBLE", double)

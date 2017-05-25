@@ -1,5 +1,5 @@
 import pytest
-from misuzu.utils import *
+from nougat.utils import *
 
 
 def test_not_awaitable_middleware():

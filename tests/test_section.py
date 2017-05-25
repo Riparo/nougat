@@ -1,6 +1,6 @@
 import pytest
-from misuzu import Misuzu, Section
-from misuzu import HandlerRedefineException, MisuzuRuntimeError, RouteReDefineException
+from nougat import Nougat, Section
+from nougat import HandlerRedefineException, NougatRuntimeError, RouteReDefineException
 
 
 def test_section():
@@ -8,8 +8,8 @@ def test_section():
 
 
 def test_repeat_section_name():
-    with pytest.raises(MisuzuRuntimeError):
-        app = Misuzu()
+    with pytest.raises(NougatRuntimeError):
+        app = Nougat()
         a = Section("a")
         b = Section("a")
 
@@ -19,7 +19,7 @@ def test_repeat_section_name():
 
 def test_in_same_section_redefine_url():
     with pytest.raises(RouteReDefineException):
-        app = Misuzu()
+        app = Nougat()
         section = Section("section")
 
         @section.get("/")
@@ -35,7 +35,7 @@ def test_in_same_section_redefine_url():
 
 def test_in_diff_section_redefine_url():
     with pytest.raises(RouteReDefineException):
-        app = Misuzu()
+        app = Nougat()
         a = Section("a")
         b = Section("b")
 
@@ -53,7 +53,7 @@ def test_in_diff_section_redefine_url():
 
 def test_in_same_section_redefine_handler():
     with pytest.raises(HandlerRedefineException):
-        app = Misuzu()
+        app = Nougat()
         section = Section("section")
 
         @section.get("/")

@@ -1,8 +1,8 @@
 import inspect
 from functools import partial
-from misuzu.router import Router
-from misuzu.exceptions import HandlerRedefineException, MisuzuRuntimeError
-from misuzu.utils import is_middleware
+from nougat.router import Router
+from nougat.exceptions import HandlerRedefineException, NougatRuntimeError
+from nougat.utils import is_middleware
 
 
 __all__ = ['Section']
@@ -100,7 +100,7 @@ class Section:
                 is_middleware(middleware)
                 self.chain.insert(0, middleware)
         else:
-            raise MisuzuRuntimeError("section only can use middleware function")
+            raise NougatRuntimeError("section only can use middleware function")
 
     async def handler(self, context, route):
 

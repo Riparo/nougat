@@ -1,4 +1,4 @@
-- [Misuzu](zh-cn/)
+- [Nougat](zh-cn/)
 - [快速入门](zh-cn/quickstarted)
 - [部件](zh-cn/section)
 - [中间件](zh-cn/middleware)

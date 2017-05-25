@@ -1,4 +1,4 @@
-from misuzu import Misuzu, Section
+from nougat import Nougat, Section
 
 async def request_header(ctx, next):
 
@@ -8,7 +8,7 @@ async def request_header(ctx, next):
     # do whatever you want after handler
 
 
-app = Misuzu(__name__)
+app = Nougat(__name__)
 app.use(request_header)
 
 main = Section("main")

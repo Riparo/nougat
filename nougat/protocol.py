@@ -1,6 +1,6 @@
 import asyncio
 import httptools
-from misuzu.context import Context
+from nougat.context import Context
 
 __all__ = ['HttpProtocol']
 
@@ -9,7 +9,7 @@ class HttpProtocol(asyncio.Protocol):
 
     def __init__(self, app, loop):
         """
-        :param app: Misuzu Instance
+        :param app: Nougat Instance
         :param loop: uvloop or asyncio loop
         """
         self.app = app

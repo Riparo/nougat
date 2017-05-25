@@ -1,8 +1,8 @@
 import httptools
 import json
 from urllib.parse import parse_qsl
-from misuzu.httpstatus import STATUS_CODES
-from misuzu.exceptions import HttpException
+from nougat.httpstatus import STATUS_CODES
+from nougat.exceptions import HttpException
 
 
 class Params(object):

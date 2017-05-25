@@ -1,4 +1,4 @@
-# Misuzu
+# Nougat
 
 an asynchronous framework which focus on best writing experience of API. The key features are the human friendly definition of parameters, which is divided from the method's logic, and the automatic documents.
 
@@ -6,10 +6,10 @@ an asynchronous framework which focus on best writing experience of API. The key
 
 # Installation
 
-misuzu only support python 3.5 and newer, so you can use `pip` or `pip3` to install
+nougat only support python 3.5 and newer, so you can use `pip` or `pip3` to install
 
 ```bash
-pip install misuzu
+pip install nougat
 ```
 
 ## better async supported
@@ -18,13 +18,13 @@ pip install misuzu
 
 # Application
 
-The Misuzu application is a object which contains global middlewares and sections registering
+The Nougat application is a object which contains global middlewares and sections registering
 
 ## hello world
 
 ```python
-from misuzu import Misuzu, Section
-app = Misuzu()
+from nougat import Nougat, Section
+app = Nougat()
 main = Section("main")
 
 @main.get("/")
@@ -86,7 +86,7 @@ app.run(port=8000, debug=True)
 
 ## app.config
 
-the `Config` object is used to store the variable for you project. and misuzu only support and suggest to use `TOML` file to store you configurations.
+the `Config` object is used to store the variable for you project. and nougat only support and suggest to use `TOML` file to store you configurations.
 
 toml (Tom's Obvious, Minimal Language) is very simple, slight, but powerful.
 
@@ -180,7 +180,7 @@ app.config['database']['server']
 
 ### load environment variable
 
-misuzu provide a special way to load environment variable
+nougat provide a special way to load environment variable
 
 in case of there is a environment variable
 
@@ -194,7 +194,7 @@ then in file `config.toml` , we wanna  varible`test` can get `TEST_VARIABLE` fro
 test = "ENV::TEST_VARIABLE::STR::HELLO NULL"
 ```
 
-while loading, misuzu will automatically read `TEST_VARIABLE` from `ENV` . if this variable is not contained in environment now, `HELLO NULL` would be read, finally the variable will be tried to parse as `STR` type.
+while loading, nougat will automatically read `TEST_VARIABLE` from `ENV` . if this variable is not contained in environment now, `HELLO NULL` would be read, finally the variable will be tried to parse as `STR` type.
 
 apparently, there is a pattern that loading variable from environment, which is `ENV::{ENVIRONMENT_VARIABLE_NAME}::{EXPECTATIVE_TYPE}::{DEFAULT_VALUE}`. if the value of one parameter in configuration file is matched on this pattern, it works.
 
@@ -203,7 +203,7 @@ app.config.load("config.toml")
 app.config['test']  # HELLO WORLD
 ```
 
-it is very useful when misuzu project is deployed with docker.
+it is very useful when nougat project is deployed with docker.
 
 ### add more type for environment variable
 
@@ -237,9 +237,9 @@ app.use(section_name)
 
 ## routing in section
 
-when designing API, specially the RESTFULAPI, the limits of authority are very important. misuzu provide precise definition of routing.
+when designing API, specially the RESTFULAPI, the limits of authority are very important. nougat provide precise definition of routing.
 
-misuzu allow section to define mostly HTTP method: `HEAD`, `GET`, `POST`, `PUT`, `DELETE`, `HEAD`, `PATCH`, `OPTIONS`, which has a decorator to bind a url:
+nougat allow section to define mostly HTTP method: `HEAD`, `GET`, `POST`, `PUT`, `DELETE`, `HEAD`, `PATCH`, `OPTIONS`, which has a decorator to bind a url:
 
 ```python
 @section.get('/')
@@ -255,7 +255,7 @@ async def index_post(ctx):
 
 ## Params on route
 
-In short, rather than those using regex to define a url, misuzu provide a simple way.  `<param_name>` in url represent as a parameter, then use decorator `@section.param(...)` to optimize this parameter. When in handler, you can access this parameter using `ctx.params.{param_name}`
+In short, rather than those using regex to define a url, nougat provide a simple way.  `<param_name>` in url represent as a parameter, then use decorator `@section.param(...)` to optimize this parameter. When in handler, you can access this parameter using `ctx.params.{param_name}`
 
 sample here
 
@@ -272,7 +272,7 @@ add middleware in section
 
 ## section.param(...)
 
-unlike other frameworks, misuzu use decorator to define parameters
+unlike other frameworks, nougat use decorator to define parameters
 
 - split between definition and using of parameter
 - much more pythonic

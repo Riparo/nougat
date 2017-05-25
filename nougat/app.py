@@ -4,23 +4,23 @@ import signal
 import sys
 import inspect
 from functools import partial
-from misuzu.router import Router, Param
-from misuzu.protocol import HttpProtocol
-from misuzu.test_client import TestClient
-from misuzu.section import Section
-from misuzu.exceptions import *
-from misuzu.utils import is_middleware
-from misuzu.config import Config
+from nougat.router import Router, Param
+from nougat.protocol import HttpProtocol
+from nougat.test_client import TestClient
+from nougat.section import Section
+from nougat.exceptions import *
+from nougat.utils import is_middleware
+from nougat.config import Config
 
 try:
     import uvloop
 except:
     uvloop = asyncio
 
-__all__ = ['Misuzu']
+__all__ = ['Nougat']
 
 
-class Misuzu(object):
+class Nougat(object):
 
     def __init__(self, name=None):
 
@@ -41,7 +41,7 @@ class Misuzu(object):
             # register section
             section = middleware_or_section_name
             if section.name in self.sections:
-                raise MisuzuRuntimeError("it seems that this section's name had been used")
+                raise NougatRuntimeError("it seems that this section's name had been used")
             logging.debug("register section {}".format(section.name))
             self.sections[section.name] = section
 
@@ -52,7 +52,7 @@ class Misuzu(object):
             middleware = middleware_or_section_name
             self.chain.insert(0, middleware)
         else:
-            raise MisuzuRuntimeError("misuzu only can use section instance or middleware function")
+            raise NougatRuntimeError("nougat only can use section instance or middleware function")
 
     async def handler(self, context, handler_future):
 

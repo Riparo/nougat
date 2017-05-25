@@ -1,9 +1,9 @@
 import pytest
-from misuzu import Misuzu, Section, ParamRedefineException, ParamMissingException
+from nougat import Nougat, Section, ParamRedefineException, ParamMissingException
 
 
 def test_parame():
-    app = Misuzu()
+    app = Nougat()
 
     section = Section("section")
 
@@ -17,7 +17,7 @@ def test_parame():
 
 def test_param_redefine():
     with pytest.raises(ParamRedefineException):
-        app = Misuzu()
+        app = Nougat()
 
         section = Section("section")
 
@@ -32,7 +32,7 @@ def test_param_redefine():
 
 def test_param_missing():
     with pytest.raises(ParamMissingException):
-        app = Misuzu()
+        app = Nougat()
 
         section = Section("section")
 
