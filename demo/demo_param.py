@@ -1,6 +1,6 @@
-from misuzu import Misuzu, Section
+from nougat import Nougat, Section
 
-app = Misuzu(__name__)
+app = Nougat(__name__)
 main = Section('main')
 
 @main.get("/<name>")
@@ -8,5 +8,5 @@ main = Section('main')
 async def index_get(request):
     return {'hello': request.params.name}
 
-app.register_section(main)
+app.use(main)
 app.run()

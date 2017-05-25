@@ -2,7 +2,7 @@
 
 ## 基本使用
 ```python
-from misuzu import BaseMiddleware
+from nougat import BaseMiddleware
 
 class MyMiddleware(BaseMiddleware):
 
@@ -27,11 +27,11 @@ class MyMiddleware(BaseMiddleware):
 
 
 ## 注册中间件
-中间件可以注册在 Misuzu 或者 Section 中，都是调用 `register_middleware` 方法
+中间件可以注册在 Nougat 或者 Section 中，都是调用 `register_middleware` 方法
 
 ### 中间件执行顺序
 
-中间件链(chain) 保证了中间件是按注册顺序执行的： 首先执行 Misuzu 中的中间件，再执行 Section 中的中间件
+中间件链(chain) 保证了中间件是按注册顺序执行的： 首先执行 Nougat 中的中间件，再执行 Section 中的中间件
 ```python
 app.register_middleware(a1)
 app.register_middleware(a2)
@@ -50,7 +50,7 @@ app.register_section(section)
 
 ## 一个记录处理函数执行时间的简单中间件
 ```python
-from misuzu import BaseMiddleware
+from nougat import BaseMiddleware
 from time import time
 class MyMiddleware(BaseMiddleware):
 

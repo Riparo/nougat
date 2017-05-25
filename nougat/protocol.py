@@ -1,11 +1,6 @@
 import asyncio
 import httptools
-from .request import Request
-from .response import Response, json
-from .exceptions import HttpException
-from pprint import pprint
-from time import time
-
+from nougat.context import Context
 
 __all__ = ['HttpProtocol']
 
@@ -14,19 +9,21 @@ class HttpProtocol(asyncio.Protocol):
 
     def __init__(self, app, loop):
         """
-        :param app: Misuzu Instance
+        :param app: Nougat Instance
         :param loop: uvloop or asyncio loop
         """
         self.app = app
         self.loop = loop
-        self.transport = None
-        self.request = None
-        self.parser = None
-        self.url = None
+
+        self.path = None
         self.headers = None
-        self.router = self.app.router
+
+        self.context = None
+
+        self.transport = None
+        self.parser = None
+
         self.__body = []
-        self.__middlewares = []
 
     def connection_made(self, transport):
         """
@@ -38,7 +35,8 @@ class HttpProtocol(asyncio.Protocol):
         """
         asyncio.Protocol override 函数，当 Protocol 失去连接时调用
         """
-        self.request = self.parser = None
+        self.context = None
+        self.parser = None
         self.__body = []
 
     def data_received(self, data):
@@ -58,7 +56,7 @@ class HttpProtocol(asyncio.Protocol):
         """
         HttpRequestParser 解析函数
         """
-        self.url = url
+        self.path = url
 
     def on_header(self, key, value):
         """
@@ -70,14 +68,14 @@ class HttpProtocol(asyncio.Protocol):
         """
         HttpRequestParser 解析函数
         """
-        # 构建 Request 类
-        url = httptools.parse_url(self.url)
-        self.request = Request(
-            url=url.path,
+        # 构建 Context 类
+        self.context = Context(
+            app=self.app,
+            path=self.path,
             headers=self.headers,
+            ip=self.transport.get_extra_info('peername')[0],
             version=self.parser.get_http_version(),
-            method=self.parser.get_method(),
-            query=url.query
+            method=self.parser.get_method().decode('utf-8'),
         )
 
     def on_body(self, body):
@@ -85,19 +83,19 @@ class HttpProtocol(asyncio.Protocol):
 
     def on_message_complete(self):
 
-        self.request.init_body(b''.join(self.__body))
+        self.context.init_body(b''.join(self.__body))
 
         # calling handler function
         handler_future = asyncio.Future()
-        asyncio.ensure_future(self.app.handler(self.request, handler_future))
+        asyncio.ensure_future(self.app.handler(self.context, handler_future))
         handler_future.add_done_callback(self.on_response)
 
     def on_response(self, handler_future):
 
         response = handler_future.result()
-        self.transport.write(response.output(self.request.version))
+        self.transport.write(response.output)
 
         if not self.parser.should_keep_alive():
             self.transport.close()
         self.parser = None
-        self.request = None
+        self.context = None

@@ -1,15 +1,47 @@
-from misuzu import Misuzu
+from nougat import Nougat, Section
+from nougat.exceptions import NougatRuntimeError, UnknownSectionException
 import json
+import pytest
 
 
-def test_app_get():
-    app = Misuzu("first test")
+def test_use_not_section_instance():
+    with pytest.raises(NougatRuntimeError):
+        app = Nougat("test")
+        app.use(Nougat())
 
-    @app.get("/")
-    async def index(request):
-        return {"hello": "world"}
 
-    response = app.test.get("/")
+def test_use_section():
+    app = Nougat("test")
+    app.use(Section("test"))
 
-    assert response.text == '{"hello": "world"}'
+    assert len(app.sections) == 1
 
+
+def test_get():
+    app = Nougat()
+
+    main = Section("main")
+
+    @main.get("/")
+    async def index(ctx):
+        return "123"
+
+    app.use(main)
+
+    res, ctx = app.test.get("/")
+    assert res.text == "123"
+
+
+def test_post():
+    app = Nougat()
+
+    main = Section("main")
+
+    @main.post("/")
+    async def index(ctx):
+        return "1234"
+
+    app.use(main)
+
+    res, ctx = app.test.post("/")
+    assert res.text == "1234"

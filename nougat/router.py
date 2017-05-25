@@ -1,7 +1,6 @@
 import re
-from .response import Response
-from .exceptions import UnknownRouterException, RouteReDefineException
-from .httpstatus import abort
+from nougat.exceptions import UnknownRouterException, RouteReDefineException, \
+    ParamMissingException, ParamRedefineException
 
 
 __all__ = ['Router', 'Param', 'Route', 'DynamicRoute', 'StaticRoute']
@@ -24,7 +23,6 @@ class Router:
 
         self.__init_route()
         self.__dynamic_pattern = re.compile(r"(<([a-zA-Z_]+)>)+")
-        self.__default_route = StaticRoute("", self.__default, self.__app_name)
 
     def __init_route(self):
         """
@@ -43,20 +41,33 @@ class Router:
         :param method: 请求方法
         :param params: Param 列表
         """
-        is_dynamic, match_pattern = self.__is_dynamic(rule)
+        is_dynamic, match_pattern, url_params = self.__is_dynamic(rule)
 
         if is_dynamic:
+            this_route = DynamicRoute(rule, handler, section_name, match_pattern, url_params)
 
-            this_route = DynamicRoute(rule, handler, section_name, match_pattern)
+            # param missing check
+            params_key = [param.name for param in params]
+            x = [param for param in this_route.url_params if param not in params_key]
+            if x:
+                raise ParamMissingException(rule, x[0])
+
             self.dynamic_routes[method].append(this_route)
 
         else:
 
             this_route = StaticRoute(rule, handler, section_name)
+
+            # raise rule redefine
+            if rule in self.fixed_routes[method]:
+                raise RouteReDefineException(method, rule)
+
             self.fixed_routes[method][rule] = this_route
 
         for param in params:
             this_route.add_param(**param)
+
+        return this_route
 
     def __is_dynamic(self, rule):
         """
@@ -67,33 +78,26 @@ class Router:
         match = self.__dynamic_pattern.findall(rule)
         if match:
             ret = rule
+            params = []
             for param in match:
                 ret = ret.replace(param[0], "(?P<{}>[^/]+)".format(param[1]))
-            return True, ret
+                if param[1] in params:
+                    raise ParamRedefineException(rule, param[1])
 
-        return False, rule
+                params.append(param[1])
+            return True, ret, params
 
-    @staticmethod
-    async def __default(request):
-        """
-        默认路由，当找不到匹配项时触发
-        :return:
-        """
-        print("404")
-        abort(404)
+        return False, rule, None
 
-    def get(self, url, method):
+    def get(self, context):
         """
         寻找与 url 匹配的路由
-        :param url: 目标 URL
-        :param method: HTTP 访问方法
+        :param context: request context
         :return: Route 类
         """
 
-        # TODO refactor
-
-        method = method.decode('utf-8')
-        url = url.decode('utf-8')
+        method = context.method
+        url = context.path
 
         # try finding route in static map
         route = self.fixed_routes[method].get(url, None)
@@ -107,9 +111,6 @@ class Router:
             for one_route in self.dynamic_routes[method]:
                 if one_route.match(url):
                     return one_route
-
-        if route is None:
-            route = self.__default_route
 
         return route
 
@@ -151,14 +152,19 @@ class Route:
     """
     rule = None
     handler = None
-    params = []
+    params = {}
     section_name = ''
 
     def add_param(self, name, type, **kwargs):
         """
         向规则中添加参数
         """
-        self.params.append(Param(name, type, **kwargs))
+        if name in self.params:
+            raise ParamRedefineException(self.rule, name)
+        self.params[name] = Param(name, type, **kwargs)
+
+    def url(self, **kwargs):
+        pass
 
 
 class DynamicRoute(Route):
@@ -166,12 +172,13 @@ class DynamicRoute(Route):
     动态路由规则
     """
 
-    def __init__(self, rule, handler, section_name, pattern):
+    def __init__(self, rule, handler, section_name, pattern, url_params):
         self.rule = rule
         self.handler = handler
         self.section_name = section_name
         self.pattern = re.compile(pattern)
-        self.params = []
+        self.params = {}
+        self.url_params = url_params
         self.url_params_dict = {}
 
     def match(self, url):
@@ -183,6 +190,27 @@ class DynamicRoute(Route):
 
         return None
 
+    def url(self, **kwargs):
+        url_ret = self.rule
+        for key, _ in self.url_params_dict.items():
+            value = kwargs.get(key, None)
+            if not value:
+                _param = self.params.get(key, None)
+                if _param:
+                    value = _param.default
+
+
+            if not value:
+                raise Exception()  # TODO param miss exception
+
+            url_ret = url_ret.replace("<{}>".format(key), value)
+            kwargs.pop(key)
+
+        if kwargs:
+            url_ret = "{}?{}".format(url_ret, "&".join(["{}={}".format(key, value) for key, value in kwargs.items()]))
+
+        return url_ret
+
 
 class StaticRoute(Route):
     """
@@ -192,4 +220,10 @@ class StaticRoute(Route):
         self.rule = rule
         self.handler = handler
         self.section_name = section_name
-        self.params = []
+        self.params = {}
+
+    def url(self, **kwargs):
+        url_ret = self.rule
+        if kwargs:
+            url_ret = "{}?{}".format(url_ret, "&".join(["{}={}".format(key, value) for key, value in kwargs.items()]))
+        return url_ret

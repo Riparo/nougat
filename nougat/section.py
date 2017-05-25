@@ -1,7 +1,8 @@
-from .router import Router
-from .middleware import BaseMiddleware
-from .exceptions import *
-from .response import Response, json
+import inspect
+from functools import partial
+from nougat.router import Router
+from nougat.exceptions import HandlerRedefineException, NougatRuntimeError
+from nougat.utils import is_middleware
 
 
 __all__ = ['Section']
@@ -13,7 +14,8 @@ class Section:
         self.name = name
         self.router = Router(self.name)
         self.__temper_params = []
-        self.chains = []
+        self.chain = []
+        self.__handler = {}
 
     def __route(self, url, method):
         """
@@ -22,10 +24,19 @@ class Section:
         :param method: HTTP 访问方法
         """
         def response(handler):
-            self.router.add(url, handler, self.name, method, self.__temper_params)
+            if handler.__name__ in self.__handler:
+                raise HandlerRedefineException(self.name, handler.__name__)
+            route = self.router.add(url, handler, self.name, method, self.__temper_params)
+            self.__handler[handler.__name__] = route
             self.__temper_params = []  # reset temper params
             return handler
         return response
+
+    def get_route_by_name(self, handler_name):
+        """
+        get route by its handler name
+        """
+        return self.__handler.get(handler_name, None)
 
     def head(self, url):
         return self.__route(url, "HEAD")
@@ -81,37 +92,28 @@ class Section:
 
         return response
 
-    def register_middleware(self, middleware):
+    def use(self, middleware):
         """
-        注册 Middleware
-        :param middleware:
+        register Middleware
         """
-        if BaseMiddleware not in middleware.__bases__:
-            raise UnknownMiddlewareException()
+        if inspect.isfunction(middleware):
+                is_middleware(middleware)
+                self.chain.insert(0, middleware)
+        else:
+            raise NougatRuntimeError("section only can use middleware function")
 
-        self.chains.append(middleware)
+    async def handler(self, context, route):
 
-    async def handler(self, request, route):
+        async def ret_handler(ctx, next):
+            ret = await next()
+            # TODO handle different type of ret: json, text, html
+            ctx.res = ret
 
-        temp_middlewares = []
+        handler = route.handler
+        handler = partial(handler, ctx=context)
+        handler = partial(ret_handler, ctx=context, next=handler)
 
-        # Request Middleware
-        for middleware in self.chains:
-            temp = middleware()
-            temp_middlewares.append(temp)
-            temp.on_request(request)
+        for middleware in self.chain:
+            handler = partial(middleware, ctx=context, next=handler)
 
-        response = await route.handler(request)
-
-        # if not return Response's instance, then json it
-        if not isinstance(response, Response):
-            response = json(response)
-
-        # Response Middleware
-        temp_middlewares.reverse()
-        for middleware in temp_middlewares:
-            middleware.on_response(response)
-
-        return response
-
-
+        await handler()

@@ -2,22 +2,19 @@ from nougat import Nougat, Section
 
 app = Nougat(__name__)
 
-main = Section('main')
+main = Section('context')
 
 
 @main.get("/")
 async def index_get(ctx):
     return "123"
 
+
 @main.get("/123")
 async def index(ctx):
-    return "1233"
+    return ctx.url_for("context.index_get", a=1, b=2)
 
-async def m(ctx, next):
-    print(ctx.path)
-    await next()
 
-app.use(m)
 app.use(main)
 
 app.run(debug=True)
