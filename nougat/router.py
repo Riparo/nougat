@@ -97,7 +97,7 @@ class Router:
         """
 
         method = context.method
-        url = context.path
+        url = context.url.path
 
         # try finding route in static map
         route = self.fixed_routes[method].get(url, None)
