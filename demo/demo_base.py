@@ -14,7 +14,7 @@ async def index(ctx):
     return "1233"
 
 async def m(ctx, next):
-    print(ctx.path)
+    print(ctx.url.path)
     await next()
 
 app.use(m)

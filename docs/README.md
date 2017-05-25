@@ -346,19 +346,34 @@ Context is object of per request including `request` and `response` , and is ref
 
 ## ctx.app
 
-Application instance reference.
-
-## ctx.path
-
-the full request url. e.g. `http://example.com/foo/bar?a=1&b=1`
+Nougat instance reference.
 
 ## ctx.url
 
-the main path of url. e.g. `/foo/bar`
+object `yarl.URL` object
 
-## ctx.query_string
+```python
+# /foo/bar?a=1&b=2&b=3
 
-the raw request string e.g. `a=1&b=1`
+ctx.url  # /foo/bar?a=1&b=2&b=3
+ctx.url.path  # /foo/bar
+ctx.url.query_string  # a=1&b=2&b=3
+ctx.url.query # <MultiDictProxy('a': '1', 'b': '2', 'b': '3')>
+```
+
+[more yarl information here](http://yarl.readthedocs.io/en/latest/)
+
+## ctx.query
+
+the alias of `ctx.url.query`
+
+```python
+ctx.query.get('a')  # 1
+ctx.query.get('d')  # None
+
+ctx.query.getall('b')  # ['2', '3']
+ctx.query.getall('d', None)  # None
+```
 
 ## ctx.method
 
