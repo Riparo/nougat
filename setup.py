@@ -18,7 +18,7 @@ setup_kwargs = {
     'license': 'MIT',
 
     'classifiers': [
-        'Development Status :: 2 - Pre-Alpha',
+        'Development Status :: 3 - Alpha',
         'Intended Audience :: Developers',
         'Environment :: Web Environment',
         'License :: OSI Approved :: MIT License',
