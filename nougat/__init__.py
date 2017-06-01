@@ -6,4 +6,4 @@ from nougat.router import *
 from nougat.section import *
 from nougat.test_client import *
 
-__version__ = "0.1.0a1"
+__version__ = "0.1.0a2"
