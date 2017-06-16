@@ -42,9 +42,9 @@ class Context(object):
 
         # response
         self.res_header = {}
-        self.type = "text/plain"
+        self.type = None
         self.res = None
-        self.status = 200
+        self.status = None
 
         self.__init__cookies()
 
@@ -169,7 +169,7 @@ class Context(object):
         payload.append('HTTP/{} {} {}\r\n'.format(self.__version, self.status, STATUS_CODES.get(self.status, 'FAIL')).encode('latin-1'))
 
         # CONTENT TYPE AND LENGTH
-        payload.append('Content-Type: {}\r\n'.format(self.type).encode('latin-1'))
+        payload.append('Content-Type: {};charset=utf-8\r\n'.format(self.type).encode('latin-1'))
         payload.append('Content-Length: {}\r\n'.format(len(body)).encode('latin-1'))
 
         # HEADERS OF LOCATION OR COOKIES

@@ -80,3 +80,9 @@ class ParamMissingException(Exception):
 
     def __str__(self):
         return "{} seems miss param named {}".format(self.rule, self.name)
+
+
+class ResponseContentCouldNotFormat(Exception):
+
+    def __str__(self):
+        return "the content of response could not be formatted as str"

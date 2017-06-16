@@ -2,7 +2,7 @@ import inspect
 from functools import partial
 from nougat.router import Router
 from nougat.exceptions import HandlerRedefineException, NougatRuntimeError
-from nougat.utils import is_middleware
+from nougat.utils import is_middleware, response_format
 
 
 __all__ = ['Section']
@@ -106,8 +106,21 @@ class Section:
 
         async def ret_handler(ctx, next):
             ret = await next()
-            # TODO handle different type of ret: json, text, html
-            ctx.res = ret
+            ret_status = 200
+            if isinstance(ret, tuple) and len(ret) == 2:
+                ret, ret_status = ret
+            ret_type, ret_format = response_format(ret)
+            html_type = {
+                "str": "text/plain",
+                "json": "application/json"
+            }.get(ret_type, "test/plain")
+
+            if not ctx.type:
+                ctx.type = html_type
+
+            if not ctx.status:
+                ctx.status = ret_status
+            ctx.res = ret_format
 
         handler = route.handler
         handler = partial(handler, ctx=context)

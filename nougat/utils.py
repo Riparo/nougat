@@ -1,6 +1,6 @@
 import inspect
-from nougat.exceptions import UnknownMiddlewareException
-from nougat.exceptions import ConfigException
+import json
+from nougat.exceptions import UnknownMiddlewareException, ConfigException, ResponseContentCouldNotFormat
 
 
 def is_middleware(func):
@@ -34,3 +34,18 @@ def is_env_format(match, dict):
 
     if not match.group('type') in dict:
         raise ConfigException("<type>'{}' is out of list {}".format(match.group('type'), dict.keys()))
+
+
+def response_format(content):
+    """
+    format different type contents as str
+    """
+    if isinstance(content, str):
+        return "str", content
+    elif isinstance(content, list) or isinstance(content, dict):
+        return "json", json.dumps(content)
+    else:
+        try:
+            return "str", str(content)
+        except:
+            raise ResponseContentCouldNotFormat()
