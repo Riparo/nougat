@@ -47,7 +47,7 @@ class Router:
             this_route = DynamicRoute(rule, handler, section_name, match_pattern, url_params)
 
             # param missing check
-            params_key = [param.name for param in params]
+            params_key = [param['name'] for param in params]
             x = [param for param in this_route.url_params if param not in params_key]
             if x:
                 raise ParamMissingException(rule, x[0])

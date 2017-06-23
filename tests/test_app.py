@@ -46,6 +46,7 @@ def test_post():
     res, ctx = app.test.post("/")
     assert res.text == "1234"
 
+
 def test_default_http_status():
     app = Nougat()
     main = Section("main")

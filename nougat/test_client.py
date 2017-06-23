@@ -30,7 +30,7 @@ class TestClient:
         self.loop = uvloop.new_event_loop()
         self.server = None
 
-    def __request(self, method, url, *args, **kwargs):
+    def __request(self, method, url, cookies=None, *args, **kwargs):
 
         ret = Proxy()
 
@@ -47,8 +47,9 @@ class TestClient:
         response_function = response_builder(ret)
 
         async def __local_request(method, url, future, *args, **kwargs):
+
             url = 'http://{host}:{port}{uri}'.format(host=HOST, port=PORT, uri=url)
-            async with aiohttp.ClientSession(loop=self.loop) as session:
+            async with aiohttp.ClientSession(loop=self.loop, cookies=cookies) as session:
                 async with getattr(session, method)(url, *args, **kwargs) as response:
                     response.text = await response.text()
                     future.set_result(response)
