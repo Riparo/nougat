@@ -2,7 +2,7 @@ import pytest
 from nougat import Nougat, Section, ParamRedefineException, ParamMissingException
 
 
-def test_parame():
+def test_param():
     app = Nougat()
 
     section = Section("section")

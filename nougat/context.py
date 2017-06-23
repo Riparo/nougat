@@ -1,15 +1,17 @@
 import httptools
 import json
 from yarl import URL
-from urllib.parse import parse_qsl
+from urllib.parse import parse_qsl, parse_qs
+from cgi import parse_header, parse_multipart
 from nougat.httpstatus import STATUS_CODES
 from nougat.exceptions import HttpException
 
 
 class Params(object):
 
-    def __setattr__(self, key, value):
-        super().__setattr__(key, value)
+    def __set_param__(self, key, value, format_type):
+        # TODO: foramt type
+        self.__setattr__(key, value)
 
     def __format_attr(self, attr_type, value):
         pass
@@ -36,15 +38,16 @@ class Context(object):
         self.query = self.url.query
 
         self.json = None
+        self.form = {}
 
         # params
         self.params = Params()
 
         # response
         self.res_header = {}
-        self.type = "text/plain"
+        self.type = None
         self.res = None
-        self.status = 200
+        self.status = None
 
         self.__init__cookies()
 
@@ -53,7 +56,7 @@ class Context(object):
         """
         the content type for request
         """
-        return self.headers.get('CONTENT_TYPE', '').lower()
+        return self.headers.get('Content-Type', '').lower()
 
     def set_cookies(self, name, value, expires=None, domain=None, path=None, secure=False, http_only=False, same_site=None):
         """
@@ -169,7 +172,7 @@ class Context(object):
         payload.append('HTTP/{} {} {}\r\n'.format(self.__version, self.status, STATUS_CODES.get(self.status, 'FAIL')).encode('latin-1'))
 
         # CONTENT TYPE AND LENGTH
-        payload.append('Content-Type: {}\r\n'.format(self.type).encode('latin-1'))
+        payload.append('Content-Type: {};charset=utf-8\r\n'.format(self.type).encode('latin-1'))
         payload.append('Content-Length: {}\r\n'.format(len(body)).encode('latin-1'))
 
         # HEADERS OF LOCATION OR COOKIES
@@ -209,29 +212,38 @@ class Context(object):
         :return:
         """
         # parse body as json
-        if self.content_type == 'application/json':
+        ctype, pdict = parse_header(self.content_type)
+
+        if ctype == 'application/json':
             self.json = json.loads(body.decode())
-            return
 
-        if not self.content_type.startswith('multipart/'):
-            pairs = parse_qsl(body.decode())
-            for key, value in pairs:
-                self.__set_body(key, value)
-            return
+        elif ctype == 'application/x-www-form-urlencoded':
+            for key, value in parse_qs(body.decode()).items():
+                self.form[key] = value
 
-        # TODO: from-data and file
+        elif ctype == "multipart/form-data":
+            pdict['boundary'] = bytes(pdict['boundary'], "utf8")
+            import io
+
+            fp = io.BytesIO(body)
+            fields = parse_multipart(fp, pdict)
+            for key, value in fields.items():
+                self.form[key] = value
+
+        else:
+            self.req_body = body.decode()
 
     def __set_body(self, key, value):
 
-        if key in self.body:
-            if not isinstance(self.body[key], list):
+        if key in self.req_body:
+            if not isinstance(self.req_body[key], list):
                 temp = list()
-                temp.append(self.body[key])
-                self.body[key] = temp
-            self.body[key].append(value)
+                temp.append(self.req_body[key])
+                self.req_body[key] = temp
+            self.req_body[key].append(value)
 
         else:
-            self.body[key] = value
+            self.req_body[key] = value
 
     def __get_msg(self, from_where, key, append=False):
         ret = None
@@ -239,16 +251,16 @@ class Context(object):
             return self.cookies.get(key, None)
 
         elif from_where == "query":
-            ret = self.query.get(key, None)
+            ret = self.query.getall(key, None)
 
         elif from_where == "form":
-            ret = self.body.get(key, None)
+            ret = self.form.get(key, None)
 
         elif from_where == "header":
-            return self.headers.get(key, None)
+            return self.headers.get(key.capitalize(), None)
 
         if isinstance(ret, list):
-            return ret if append else ret[-1]
+            return ret if append else ret[0]
 
         return ret
 
@@ -258,15 +270,28 @@ class Context(object):
         :param route:
         :return:
         """
-        for param in route.params:
+        is_dynamic = True if hasattr(route, "url_params_dict") else False
+        for param in route.params.values():
 
-            if param.name in route.url_params_dict:
-                self.params.__setattr__(param.name, route.url_params_dict[param.name])
+            param_name = param.action or param.name
+
+            ret = [] if param.append else None
+
+            if is_dynamic and param.name in route.url_params_dict:
+                self.params.__setattr__(param_name, route.url_params_dict[param.name])
                 continue
 
             for location in param.location:
-                # pprint("{} {} {}", location, param.name, param.append)
-                param_name = param.action or param.name
-                param_content = self.__get_msg(location, param.name, param.append) or param.default
+                location_value = self.__get_msg(location, param.name, param.append)
+                if param.append:
+                    ret.extend(location_value)
+                else:
+                    if not ret:
+                        ret = location_value
+                    else:
+                        break
 
-                self.params.__setattr__(param_name, param_content)
+            if not ret and param.optional:
+                ret = param.default
+
+            self.params.__set_param__(param_name, ret, param.type)

@@ -15,3 +15,4 @@ def test_redirect():
     res, ctx = app.test.get("/")
 
     assert res.url == app.test.url("/123")
+    assert res.status == 404

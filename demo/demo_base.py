@@ -7,7 +7,7 @@ main = Section('main')
 
 @main.get("/")
 async def index_get(ctx):
-    return "123"
+    return "你好啊"
 
 @main.get("/123")
 async def index(ctx):

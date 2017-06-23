@@ -1,7 +1,6 @@
 from setuptools import setup
 from os import path
 from nougat import __version__
-from distutils.errors import DistutilsPlatformError
 
 here = path.abspath(path.dirname(__file__))
 
@@ -40,7 +39,7 @@ setup_kwargs = {
 try:
     setup(**setup_kwargs)
 
-except DistutilsPlatformError as exception:
+except Exception as exception:
 
     setup_kwargs['install_requires'].remove('uvloop>=0.8.0')
     setup(**setup_kwargs)
