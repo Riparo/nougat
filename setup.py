@@ -30,16 +30,11 @@ setup_kwargs = {
     'packages': ['nougat'],
     'install_requires': [
         'httptools>=0.0.9',
-        'uvloop>=0.8.0',
         'aiofiles>=0.3.0',
         'aiohttp>=2.0.7',
         'toml>=0.9.2'
     ],
 }
-try:
-    setup(**setup_kwargs)
 
-except Exception as exception:
+setup(**setup_kwargs)
 
-    setup_kwargs['install_requires'].remove('uvloop>=0.8.0')
-    setup(**setup_kwargs)
