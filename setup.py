@@ -34,6 +34,10 @@ setup_kwargs = {
         'aiohttp>=2.0.7',
         'toml>=0.9.2'
     ],
+    'entry_points': '''
+        [console_scripts]
+        nougat=nougat.script:cli
+    '''
 }
 
 setup(**setup_kwargs)
