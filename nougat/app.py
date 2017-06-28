@@ -22,7 +22,7 @@ __all__ = ['Nougat']
 
 class Nougat(object):
 
-    def __init__(self, name=None):
+    def __init__(self, name='Nougat APP'):
 
         self.name = name
         self.__test_client = None
@@ -112,3 +112,13 @@ class Nougat(object):
 
     def stop(self):
         asyncio.get_event_loop().stop()
+
+    def doc(self):
+        """
+        generate the api document
+        :return: 
+        """
+        return {
+            'name': self.name,
+            'sections': [section.doc() for _, section in self.sections.items()]
+        }

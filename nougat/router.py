@@ -128,6 +128,16 @@ class Router:
 
             self.dynamic_routes[method].extend(router.dynamic_routes[method])
 
+    def list(self):
+        apis = []
+        for method in METHODS:
+            for _, route in self.fixed_routes[method].items():
+                apis.append(route.doc())
+            for route in self.dynamic_routes[method]:
+                apis.append(route.doc())
+
+        return apis
+
 
 class Param:
 
@@ -211,6 +221,11 @@ class DynamicRoute(Route):
 
         return url_ret
 
+    def doc(self):
+        return {
+            'rule': self.rule
+        }
+
 
 class StaticRoute(Route):
     """
@@ -227,3 +242,8 @@ class StaticRoute(Route):
         if kwargs:
             url_ret = "{}?{}".format(url_ret, "&".join(["{}={}".format(key, value) for key, value in kwargs.items()]))
         return url_ret
+
+    def doc(self):
+        return {
+            'rule': self.rule
+        }
