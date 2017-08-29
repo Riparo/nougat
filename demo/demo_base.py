@@ -1,23 +1,29 @@
-from nougat import Nougat, Section
-
-app = Nougat(__name__)
-
-main = Section('main')
+from nougat import Nougat
+from nougat.routing import get, post, param, params, Param, ParameterGroup, Routing
 
 
-@main.get("/")
-async def index_get(ctx):
-    return "你好啊"
+app = Nougat()
 
-@main.get("/123")
-async def index(ctx):
-    return "1233"
 
-async def m(ctx, next):
-    print(ctx.url.path)
-    await next()
+class Pagination(ParameterGroup):
 
-app.use(m)
-app.use(main)
+    page = Param(int)
+    page_size = Param(int)
 
-app.run(debug=True)
+
+class CommonRouting(Routing):
+
+    @get('/')
+    @param('name', str)
+    def index(self):
+        return "hello"
+
+    @post('/')
+    @params(ParameterGroup)
+    def post_something(self):
+        return 'post'
+
+
+app.route(CommonRouting)
+
+app.run()
