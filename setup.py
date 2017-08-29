@@ -32,7 +32,6 @@ setup_kwargs = {
         'httptools>=0.0.9',
         'aiofiles>=0.3.0',
         'aiohttp>=2.0.7',
-        'toml>=0.9.2',
         'click>=6.7.0'
     ],
     'entry_points': '''
