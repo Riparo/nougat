@@ -1,6 +1,8 @@
 from typing import TYPE_CHECKING, Callable, Any, List
-import copy
+import re
 from nougat.exceptions import ParamRedefineException, ParamMissingException
+
+import logging
 
 
 class Param:
@@ -58,6 +60,12 @@ class Route:
     def __call__(self, *args, **kwargs):
 
         raise Exception('Route Function could not be called')
+
+    def match(self, method: str, route: str) -> bool:
+        if self.method == method and re.fullmatch(self.route, route):
+            return True
+
+        return False
 
 
 def __method_generator(method: str, route: str) -> Callable:
@@ -141,3 +149,37 @@ class Routing:
 
     prefix: str = ''
 
+    def __init__(self, request, response):
+        self.__request = request
+        self.__response = response
+
+    def render(self) -> str:
+
+        pass
+
+    def redirect(self) -> str:
+
+        pass
+
+    def abort(self, code: int, message: str) -> None:
+        pass
+
+    def url_for(self):
+        pass
+
+    def set_cookies(self) -> None:
+        pass
+
+    def set_header(self) -> None:
+        pass
+
+    @classmethod
+    def routes(cls) -> List[Route]:
+        routes: List[Route] = []
+        for attr_name in dir(cls):
+            attr = getattr(cls, attr_name)
+            if isinstance(attr, Route):
+                logging.debug("Routing {} has Route {} {}".format(cls.__class__, attr.method, attr.route))
+                routes.append(attr)
+
+        return routes

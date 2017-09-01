@@ -1,6 +1,10 @@
+from typing import TYPE_CHECKING
 import asyncio
 import httptools
-from nougat.context import Context
+from nougat.context import Request
+
+if TYPE_CHECKING:
+    from nougat.app import Nougat
 
 __all__ = ['HttpProtocol']
 
@@ -18,7 +22,7 @@ class HttpProtocol(asyncio.Protocol):
         self.path = None
         self.headers = None
 
-        self.context = None
+        self.request = None
 
         self.transport = None
         self.parser = None
@@ -64,30 +68,25 @@ class HttpProtocol(asyncio.Protocol):
         """
         self.headers.append((key.decode(), value.decode()))
 
-    def on_headers_complete(self):
-        """
-        HttpRequestParser 解析函数
-        """
-        # 构建 Context 类
-        self.context = Context(
+    def on_body(self, body):
+        self.__body.append(body)
+
+    def on_message_complete(self):
+
+        # init Request
+        self.request = Request(
             app=self.app,
             path=self.path,
             headers=self.headers,
             ip=self.transport.get_extra_info('peername')[0],
             version=self.parser.get_http_version(),
             method=self.parser.get_method().decode('utf-8'),
+            body=b''.join(self.__body)
         )
-
-    def on_body(self, body):
-        self.__body.append(body)
-
-    def on_message_complete(self):
-
-        self.context.init_body(b''.join(self.__body))
 
         # calling handler function
         handler_future = asyncio.Future()
-        asyncio.ensure_future(self.app.handler(self.context, handler_future))
+        asyncio.ensure_future(self.app.handler(self.request, handler_future))
         handler_future.add_done_callback(self.on_response)
 
     def on_response(self, handler_future):
@@ -98,4 +97,4 @@ class HttpProtocol(asyncio.Protocol):
         if not self.parser.should_keep_alive():
             self.transport.close()
         self.parser = None
-        self.context = None
+        self.request = None

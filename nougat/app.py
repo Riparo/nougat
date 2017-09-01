@@ -12,12 +12,18 @@ from nougat.exceptions import *
 from nougat.utils import is_middleware
 from nougat.config import Config
 
+from typing import List, Tuple, TypeVar, Type
+from nougat.context import Request, Response
+from nougat.routing import Routing, Route
+
 try:
     import uvloop
 except:
     uvloop = asyncio
 
 __all__ = ['Nougat']
+
+RoutingType = TypeVar('RoutingType', bound=Routing)
 
 
 class Nougat(object):
@@ -32,6 +38,9 @@ class Nougat(object):
         self.chain = []
 
         self.sections = {}
+
+        # new version
+        self.__routes: List[Tuple('Routing', 'Route')] = []
 
     def use(self, middleware_or_section_name):
         """
@@ -54,30 +63,43 @@ class Nougat(object):
         else:
             raise NougatRuntimeError("nougat only can use section instance or middleware function")
 
-    async def handler(self, context, handler_future):
+    async def handler(self, request, handler_future):
 
-        try:
-            # find route
-            route = self.router.get(context)
-            if not route:
-                raise HttpException(None, 404)
+        # try:
+        #     # find route
+        #     route = self.router.get(context)
+        #     if not route:
+        #         raise HttpException(None, 404)
+        #
+        #     section = self.sections.get(route.section_name)
+        #     context.generate_params(route)
+        #
+        #     handler = partial(section.handler, context=context, route=route)
+        #
+        #     for middleware in self.chain:
+        #         handler = partial(middleware, ctx=context, next=handler)
+        #
+        #     await handler()
+        #
+        # except HttpException as e:
+        #
+        #     context.status = e.status
+        #     context.res = e.body
+        #
+        # handler_future.set_result(context)
+        response = Response()
+        for routing, route in self.__routes:
+            if route.match(request.method, request.url.path):
+                print(route)
+                routing = routing(request, response)
 
-            section = self.sections.get(route.section_name)
-            context.generate_params(route)
+                controller_res = route.controller(routing)
 
-            handler = partial(section.handler, context=context, route=route)
+                response.res = controller_res
 
-            for middleware in self.chain:
-                handler = partial(middleware, ctx=context, next=handler)
+                break
 
-            await handler()
-
-        except HttpException as e:
-
-            context.status = e.status
-            context.res = e.body
-
-        handler_future.set_result(context)
+        handler_future.set_result(response)
 
     @property
     def test(self):
@@ -122,3 +144,10 @@ class Nougat(object):
             'name': self.name,
             'sections': [section.doc() for _, section in self.sections.items()]
         }
+
+    def route(self, routing: Type[RoutingType]):
+
+        logging.debug('adding Routing {}'.format(routing.__class__))
+        for route in routing.routes():
+
+            self.__routes.append((routing, route))

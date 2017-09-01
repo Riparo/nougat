@@ -5,7 +5,10 @@ from urllib.parse import parse_qsl, parse_qs
 from cgi import parse_header, parse_multipart
 from nougat.httpstatus import STATUS_CODES
 from nougat.exceptions import HttpException
+from typing import TYPE_CHECKING, Dict
 
+if TYPE_CHECKING:
+    from nougat.app import Nougat
 
 class Params(object):
 
@@ -295,3 +298,72 @@ class Context(object):
                 ret = param.default
 
             self.params.__set_param__(param_name, ret, param.type)
+
+
+class Request:
+
+    def __init__(self, app: 'Nougat', path: bytes, headers: Dict[str, str], ip: str, version: str, method: str, body: bytes):
+
+        self.app = app
+        self.headers = headers
+        self.method = method
+        self.version = version
+        self.query = {}
+        self.form = {}
+        self.cookies = {}
+        self.ip = ip
+        self.json = None
+        self.url = URL(path.decode())
+
+        self.__raw_body = body
+
+
+class Response:
+
+    def __init__(self, status: int=200):
+
+        self.__version = '1.1'
+        self.status = status
+        self.res = ''
+
+        self.type = 'text'
+
+    @property
+    def output(self):
+        """
+        output the http payload
+        """
+
+        def body_bytes(body):
+            body_type = type(body)
+            if body_type is str:
+                body = body.encode('utf-8')
+            elif body_type is bytes:
+                body = body
+            else:
+                body = b'Unable to interpret body'
+
+            return body
+
+        # TODO format the output
+        body = body_bytes(self.res or STATUS_CODES.get(self.status, 'FAIL'))
+
+        payload = []
+
+        # HTTP STATUS
+        payload.append(
+            'HTTP/{} {} {}\r\n'.format(self.__version, self.status, STATUS_CODES.get(self.status, 'FAIL')).encode(
+                'latin-1'))
+
+        # CONTENT TYPE AND LENGTH
+        payload.append('Content-Type: {};charset=utf-8\r\n'.format(self.type).encode('latin-1'))
+        payload.append('Content-Length: {}\r\n'.format(len(body)).encode('latin-1'))
+
+        # HEADERS OF LOCATION OR COOKIES
+        # payload.extend(self.__build_response_headers())
+
+        # RESPONSE BODY
+        payload.append(b'\r\n')
+        payload.append(body)
+
+        return b''.join(payload)
