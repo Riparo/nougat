@@ -87,6 +87,7 @@ class Nougat(object):
         #
         # handler_future.set_result(context)
         response = Response()
+
         try:
 
             routing, route = self.router.match(request.method,  request.url.path)
@@ -95,6 +96,7 @@ class Nougat(object):
         except RouteNoMatchException:
             response.status = 404
             controller_res = ''
+
         response.res = controller_res
 
         handler_future.set_result(response)
@@ -152,6 +154,9 @@ class Nougat(object):
     def route(self, routing: Type[RoutingType]):
 
         logging.info('adding Routing {}'.format(routing.__class__))
+
+        routing_prefix = routing.prefix
+
         for route in routing.routes():
-            print(routing, route)
+            route.route = "{}{}".format(routing_prefix, route.route)
             self.router.add_route(routing, route)
