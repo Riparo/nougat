@@ -327,6 +327,8 @@ class Response:
         self.res = ''
 
         self.type = 'text'
+        self.__headers = {}
+        self.__cookies = {}
 
     @property
     def output(self):

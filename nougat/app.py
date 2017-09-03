@@ -4,7 +4,6 @@ import signal
 import sys
 import inspect
 from functools import partial
-from nougat.router import Router, Param
 from nougat.protocol import HttpProtocol
 from nougat.test_client import TestClient
 from nougat.section import Section
@@ -12,9 +11,9 @@ from nougat.exceptions import *
 from nougat.utils import is_middleware
 from nougat.config import Config
 
-from typing import List, Tuple, TypeVar, Type
+from typing import List, Tuple, TypeVar, Type, Set
 from nougat.context import Request, Response
-from nougat.routing import Routing, Route
+from nougat.routing import Routing, Route, Router
 
 try:
     import uvloop
@@ -28,11 +27,11 @@ RoutingType = TypeVar('RoutingType', bound=Routing)
 
 class Nougat(object):
 
-    def __init__(self, name='Nougat APP'):
+    def __init__(self, name='Nougat APP') -> None:
 
         self.name = name
         self.__test_client = None
-        self.router = Router(self.name)
+        self.router: 'Router' = Router()
 
         self.config = Config()
         self.chain = []
@@ -40,7 +39,7 @@ class Nougat(object):
         self.sections = {}
 
         # new version
-        self.__routes: List[Tuple('Routing', 'Route')] = []
+        self.__routes: Set[Tuple('Routing', 'Route')] = set()
 
     def use(self, middleware_or_section_name):
         """
@@ -88,16 +87,15 @@ class Nougat(object):
         #
         # handler_future.set_result(context)
         response = Response()
-        for routing, route in self.__routes:
-            if route.match(request.method, request.url.path):
-                print(route)
-                routing = routing(request, response)
+        try:
 
-                controller_res = route.controller(routing)
-
-                response.res = controller_res
-
-                break
+            routing, route = self.router.match(request.method,  request.url.path)
+            routing = routing(request, response)
+            controller_res = route.controller(routing)
+        except RouteNoMatchException:
+            response.status = 404
+            controller_res = ''
+        response.res = controller_res
 
         handler_future.set_result(response)
 
@@ -115,6 +113,12 @@ class Nougat(object):
 
         if debug:
             logging.basicConfig(level=logging.DEBUG)
+
+        console = logging.StreamHandler()
+        console.setLevel(logging.INFO)
+        formatter = logging.Formatter('%(name)-12s: %(levelname)-8s %(message)s')
+        console.setFormatter(formatter)
+        logging.getLogger('').addHandler(console)
 
         def ask_exit():
             loop.stop()
@@ -147,7 +151,7 @@ class Nougat(object):
 
     def route(self, routing: Type[RoutingType]):
 
-        logging.debug('adding Routing {}'.format(routing.__class__))
+        logging.info('adding Routing {}'.format(routing.__class__))
         for route in routing.routes():
-
-            self.__routes.append((routing, route))
+            print(routing, route)
+            self.router.add_route(routing, route)

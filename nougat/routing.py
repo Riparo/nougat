@@ -1,8 +1,10 @@
-from typing import TYPE_CHECKING, Callable, Any, List
+from typing import TYPE_CHECKING, Callable, Any, List, Optional, Tuple, TypeVar, Type
 import re
-from nougat.exceptions import ParamRedefineException, ParamMissingException
-
+from nougat.exceptions import ParamRedefineException, ParamMissingException, RouteNoMatchException
+from functools import lru_cache
 import logging
+
+
 
 
 class Param:
@@ -37,9 +39,11 @@ class Route:
 
     def __init__(self, method: str, route: str, controller: Callable) -> None:
         self.method = method.upper()
-        self.route = route
+        self.__route = route
         self.controller = controller
         self.params = {}
+
+        self.__route_pattern_generator()
 
     def add_param(self,
                   name: str,
@@ -61,8 +65,24 @@ class Route:
 
         raise Exception('Route Function could not be called')
 
+    def __route_pattern_generator(self):
+        if self.__route:
+            pattern = re.sub(re.compile(r"(:(?P<name>[a-zA-Z_]+))+"), "(?P<\g<name>>[^/]+)", self.__route)
+            print(pattern)
+            self.__route_pattern = re.compile(pattern)
+
+    @property
+    def route(self):
+        return self.__route
+
+    @route.setter
+    def route(self, value):
+
+        self.__route = value
+        self.__route_pattern_generator()
+
     def match(self, method: str, route: str) -> bool:
-        if self.method == method and re.fullmatch(self.route, route):
+        if self.method == method and self.__route_pattern.fullmatch(route):
             return True
 
         return False
@@ -183,3 +203,23 @@ class Routing:
                 routes.append(attr)
 
         return routes
+
+
+RoutingType = TypeVar('RoutingType', bound=Routing)
+
+
+class Router:
+
+    def __init__(self):
+        self.__routes: List[Tuple[Type[RoutingType], 'Route']] = []
+
+    @lru_cache(maxsize=2**5)
+    def match(self, method: str, url: str) -> Optional[Tuple[Type[RoutingType], Route]]:
+        for routing, route in self.__routes:
+            if route.match(method, url):
+                return routing, route
+
+        raise RouteNoMatchException()
+
+    def add_route(self, routing: Type[RoutingType], route: 'Route') -> None:
+        self.__routes.append((routing, route))

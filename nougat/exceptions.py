@@ -33,6 +33,9 @@ class UnknownMiddlewareException(Exception):
 class UnknownSectionException(Exception): pass
 
 
+class RouteNoMatchException(Exception): pass
+
+
 class UnknownRouterException(Exception): pass
 
 
