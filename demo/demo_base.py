@@ -13,17 +13,19 @@ class Pagination(ParameterGroup):
 
 class CommonRouting(Routing):
 
-    @get('/')
+    prefix = '/hello'
+
+    @get('/:id')
     @param('name', str)
     def index(self):
-        return "hello"
+        return 'hello'
 
-    @post('/')
+    @get('/1')
     @params(ParameterGroup)
     def post_something(self):
-        return 'post'
+        return 'got 1 now'
 
 
 app.route(CommonRouting)
 
-app.run()
+app.run(debug=True)
