@@ -1,29 +1,18 @@
 from nougat import Nougat
-from nougat.routing import get, post, param, params, Param, ParameterGroup, Routing
-
+from nougat.routing import get, Routing
 
 app = Nougat()
 
 
-class Pagination(ParameterGroup):
-
-    page = Param(int)
-    page_size = Param(int)
-
-
 class CommonRouting(Routing):
 
-    prefix = '/hello'
-
-    @get('/:id')
-    @param('name', str)
+    @get('/')
     def index(self):
-        return 'hello'
+        return 'hello world'
 
-    @get('/1')
-    @params(ParameterGroup)
-    def post_something(self):
-        return 'got 1 now'
+    @get('/user')
+    def user_index(self):
+        return 'hello user'
 
 
 app.route(CommonRouting)
