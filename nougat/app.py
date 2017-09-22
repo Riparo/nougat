@@ -3,6 +3,7 @@ import logging
 import signal
 import sys
 import inspect
+from contextlib import contextmanager
 from functools import partial
 from nougat.protocol import HttpProtocol
 from nougat.test_client import TestClient
@@ -34,33 +35,21 @@ class Nougat(object):
         self.router: 'Router' = Router()
 
         self.config = Config()
-        self.chain = []
+        self.__middleware_chain = []
 
         self.sections = {}
 
         # new version
         self.__routes: Set[Tuple('Routing', 'Route')] = set()
 
-    def use(self, middleware_or_section_name):
+    def use(self, middleware):
         """
-        register middleware or section 
+        register middleware
         """
-        if isinstance(middleware_or_section_name, Section):
-            # register section
-            section = middleware_or_section_name
-            if section.name in self.sections:
-                raise NougatRuntimeError("it seems that this section's name had been used")
-            logging.debug("register section {}".format(section.name))
-            self.sections[section.name] = section
 
-            self.router.union(section.router)
-        elif inspect.isfunction(middleware_or_section_name):
-            # register middleware
-            is_middleware(middleware_or_section_name)
-            middleware = middleware_or_section_name
-            self.chain.insert(0, middleware)
-        else:
-            raise NougatRuntimeError("nougat only can use section instance or middleware function")
+        is_middleware(middleware)
+        middleware = middleware
+        self.__middleware_chain.append(middleware)
 
     async def handler(self, request, handler_future):
 
@@ -113,14 +102,6 @@ class Nougat(object):
         asyncio.set_event_loop(loop)
         loop.set_debug(debug)
 
-        if debug:
-            logging.basicConfig(level=logging.DEBUG)
-
-        console = logging.StreamHandler()
-        console.setLevel(logging.INFO)
-        formatter = logging.Formatter('%(name)-12s: %(levelname)-8s %(message)s')
-        console.setFormatter(formatter)
-        logging.getLogger('').addHandler(console)
 
         def ask_exit():
             loop.stop()
@@ -137,6 +118,13 @@ class Nougat(object):
         finally:
             server_coroutine.close()
             loop.close()
+
+    @contextmanager
+    def create_server(self, loop, host="127.0.0.1", port=8000):
+
+        server_coroutine = loop.create_server(partial(HttpProtocol, loop=loop, app=self), host, port)
+        yield
+        server_coroutine.close()
 
     def stop(self):
         asyncio.get_event_loop().stop()
@@ -159,4 +147,4 @@ class Nougat(object):
 
         for route in routing.routes():
             route.route = "{}{}".format(routing_prefix, route.route)
-            self.router.add_route(routing, route)
+            self.router.add_routing(routing, route)

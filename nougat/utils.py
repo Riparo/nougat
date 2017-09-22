@@ -3,6 +3,7 @@ import json
 from nougat.exceptions import UnknownMiddlewareException, ConfigException, ResponseContentCouldNotFormat
 from cgi import parse_header
 
+
 def is_middleware(func):
     """
     test whether it is a middleware
@@ -11,14 +12,13 @@ def is_middleware(func):
     args = list(inspect.signature(func).parameters.items())
 
     if not inspect.iscoroutinefunction(func):
-        print("hello")
         raise UnknownMiddlewareException("middleware {} should be awaitable".format(func.__name__))
 
     if len(args) != 2:
-        raise UnknownMiddlewareException("middleware {} should has 2 params named ctx and next".format(func.__name__))
+        raise UnknownMiddlewareException("middleware {} should has 2 params named context and next".format(func.__name__))
 
-    if args[0][0] != 'ctx':
-        raise UnknownMiddlewareException("the first param's name of middleware {} should be ctx".format(func.__name__))
+    if args[0][0] != 'context':
+        raise UnknownMiddlewareException("the first param's name of middleware {} should be context".format(func.__name__))
 
     if args[1][0] != 'next':
         raise UnknownMiddlewareException("the second param's name of middleware {} should be next".format(func.__name__))
@@ -126,7 +126,7 @@ def parse_multipart(fp, pdict):
     return partdict
 
 
-class cached_property(object):
+class CachedProperty(object):
     """
     A property that is only computed once per instance and then replaces itself
     with an ordinary attribute. Deleting the attribute resets the property.
