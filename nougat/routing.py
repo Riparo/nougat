@@ -5,8 +5,6 @@ from functools import lru_cache
 import logging
 
 
-
-
 class Param:
 
     def __init__(self,
@@ -187,12 +185,6 @@ class Routing:
     def url_for(self):
         pass
 
-    def set_cookies(self) -> None:
-        pass
-
-    def set_header(self) -> None:
-        pass
-
     @classmethod
     def routes(cls) -> List[Route]:
         routes: List[Route] = []
@@ -221,5 +213,5 @@ class Router:
 
         raise RouteNoMatchException()
 
-    def add_route(self, routing: Type[RoutingType], route: 'Route') -> None:
+    def add_routing(self, routing: Type[RoutingType], route: 'Route') -> None:
         self.__routes.append((routing, route))
