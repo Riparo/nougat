@@ -1,36 +1,9 @@
 from typing import TYPE_CHECKING, Callable, Any, List, Optional, Tuple, TypeVar, Type
 import re
-from nougat.exceptions import ParamRedefineException, ParamMissingException, RouteNoMatchException
+from nougat.exceptions import ParamRedefineException, ParamMissingException, RouteNoMatchException, HttpException
+from nougat.parameter import Param
 from functools import lru_cache
 import logging
-
-
-class Param:
-
-    def __init__(self,
-                 type: Callable[[str], Any],
-                 location: (str, List[str]) = None,
-                 optional: bool =False,
-                 default: Any =None,
-                 action: str = None,
-                 append: bool = False,
-                 description: str = None):
-
-        self.type = type  # type or [type, type]
-        self.location = location  # cookies, query, form, headers
-        self.optional = optional  # true, false
-        self.default = default  # if optional is true
-        self.action = action  # rename
-        self.append = append  # list or not
-        self.description = description  # description
-
-        # location iterable
-        if not isinstance(self.location, list):
-            self.location = [self.location]
-
-
-class ParameterGroup:
-    pass
 
 
 class Route:
@@ -121,65 +94,55 @@ def delete(route: str) -> Callable:
     return __method_generator('DELETE', route)
 
 
-def param(name: str,
-          type: Callable[[str], Any],
-          location: (str, List[str]) = 'query',
-          optional: bool = False,
-          default: Any = None,
-          action=None,
-          append=False,
-          description: str = None
-          ) -> Callable:
-
-    def decorator(controller: (Callable, 'Route')) -> Route:
-
-        if not isinstance(controller, Route):
-            controller = Route('', '', controller)
-
-        controller.add_param(name, type,  location, optional, default, action, append, description)
-
-        return controller
-
-    return decorator
-
-
-def params(group: 'ParameterGroup') -> Callable:
-
-    def decorator(controller: (Callable, 'Route')):
-        if not isinstance(controller, Route):
-            controller = Route('', '', controller)
-
-        for attr_name in dir(group):
-            attr = getattr(group, attr_name)
-            if isinstance(attr, Param):
-                controller.add_param(attr_name, attr.type, attr.location, attr.optional, attr.default, attr.action, attr.append, attr.description)
-
-        return controller
-
-    return decorator
-
-
 class Routing:
 
     prefix: str = ''
 
     def __init__(self, request, response):
-        self.__request = request
-        self.__response = response
+        self.request = request
+        self.response = response
 
     def render(self) -> str:
 
         pass
 
-    def redirect(self) -> str:
+    def redirect(self, url):
+        """
+        redirect to another page
+        :param url: the page need to go
+        """
+        self.response.set_header("Location", url)
+        self.abort(302)
 
-        pass
+    def abort(self, code: int, message: str = None) -> None:
+        """
+        abort HTTPException
+        :param code: http status code
+        :param message: http body
+        """
+        raise HttpException(code, message)
 
-    def abort(self, code: int, message: str) -> None:
-        pass
+    def url_for(self, name, **kwargs):
+        """
+        get the url according to the section name and handler name
+        :param name: a string like section_name.handler_name
+        :return: the url string
+        """
+        # TODO url for function
+        _name_split = name.split(".")
 
-    def url_for(self):
-        pass
+        if len(_name_split) != 2:
+            raise Exception()  # TODO new exception
+
+        section_name, handler_name = _name_split
+        section = self.app.sections.get(section_name, None)
+
+        if not section:
+            raise Exception()  # TODO ne exception
+
+        route = section.get_route_by_name(handler_name)
+
+        return route.url(**kwargs)
 
     @classmethod
     def routes(cls) -> List[Route]:

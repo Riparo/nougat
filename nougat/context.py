@@ -350,6 +350,34 @@ class Request:
                         cookies_format[one_cookies[0]] = "=".join(one_cookies[1:])
             return cookies_format
 
+        def body_formator(self, body):
+            """
+            format body into different type
+            :param body:
+            :return:
+            """
+            # parse body as json
+            ctype, pdict = parse_header(self.content_type)
+
+            if ctype == 'application/json':
+                self.json = json.loads(body.decode())
+
+            elif ctype == 'application/x-www-form-urlencoded':
+                for key, value in parse_qs(body.decode()).items():
+                    self.form[key] = value
+
+            elif ctype == "multipart/form-data":
+                pdict['boundary'] = bytes(pdict['boundary'], "utf8")
+                import io
+
+                fp = io.BytesIO(body)
+                fields = parse_multipart(fp, pdict)
+                for key, value in fields.items():
+                    self.form[key] = value
+
+            else:
+                self.req_body = body.decode()
+
 
 class Response:
 
