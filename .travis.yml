@@ -2,7 +2,7 @@ language: python
 python:
   - "3.6"
 install:
-  - pip install httptools aiohttp aiofiles click
+  - pip install httptools aiohttp aiofiles click codecov
   - python setup.py install
 script:
   - pytest --cov=nougat
