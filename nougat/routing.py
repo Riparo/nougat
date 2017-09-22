@@ -59,10 +59,6 @@ class Route:
 
         self.params[name] = Param(type, location, optional, default, action, append, description)
 
-    def __call__(self, *args, **kwargs):
-
-        raise Exception('Route Function could not be called')
-
     def __route_pattern_generator(self):
         if self.__route:
             pattern = re.sub(re.compile(r"(:(?P<name>[a-zA-Z_]+))+"), "(?P<\g<name>>[^/]+)", self.__route)
