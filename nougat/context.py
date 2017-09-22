@@ -11,6 +11,7 @@ from typing import TYPE_CHECKING, Dict
 if TYPE_CHECKING:
     from nougat.app import Nougat
 
+
 class Params(object):
 
     def __set_param__(self, key, value, format_type):

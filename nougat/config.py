@@ -1,4 +1,4 @@
-import toml
+
 import os
 import re
 from .utils import is_env_format
@@ -80,10 +80,10 @@ class Config(dict):
         :param file: 
         :return: 
         """
-        with open(file, 'r') as cfile:
-            config = toml.loads(cfile.read())
-        self.check_dict(config)
-        self.update(config)
+        # with open(file, 'r') as cfile:
+        #     config = toml.loads(cfile.read())
+        # self.check_dict(config)
+        # self.update(config)
 
 
 def into_str(value):
