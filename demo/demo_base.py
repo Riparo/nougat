@@ -1,23 +1,20 @@
-from nougat import Nougat, Section
+from nougat import Nougat
+from nougat.routing import get, Routing
 
-app = Nougat(__name__)
-
-main = Section('main')
+app = Nougat()
 
 
-@main.get("/")
-async def index_get(ctx):
-    return "你好啊"
+class CommonRouting(Routing):
 
-@main.get("/123")
-async def index(ctx):
-    return "1233"
+    @get('/')
+    def index(self):
+        return 'hello world'
 
-async def m(ctx, next):
-    print(ctx.url.path)
-    await next()
+    @get('/user')
+    def user_index(self):
+        return 'hello user'
 
-app.use(m)
-app.use(main)
+
+app.route(CommonRouting)
 
 app.run(debug=True)

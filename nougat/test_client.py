@@ -8,6 +8,8 @@ try:
 except:
     uvloop = asyncio
 
+from contextlib import contextmanager
+
 
 __all__ = ['TestClient']
 
@@ -27,8 +29,19 @@ class TestClient:
 
     def __init__(self, app=None):
         self.app = app
-        self.loop = uvloop.new_event_loop()
+        self.loop = None
         self.server = None
+
+    def listen(self, loop):
+        self.server = loop.create_server(partial(HttpProtocol, loop=self.loop, app=self.app), HOST, PORT)
+        print('hello')
+
+    @contextmanager
+    def register(self, section):
+        print('on register')
+        yield
+        print('end register')
+        self.server.close()
 
     def __request(self, method, url, cookies=None, *args, **kwargs):
 

@@ -33,6 +33,9 @@ class UnknownMiddlewareException(Exception):
 class UnknownSectionException(Exception): pass
 
 
+class RouteNoMatchException(Exception): pass
+
+
 class UnknownRouterException(Exception): pass
 
 
@@ -64,21 +67,21 @@ class HandlerRedefineException(Exception):
 
 class ParamRedefineException(Exception):
 
-    def __init__(self, rule, name):
+    def __init__(self, rule: str, name: str) -> None:
         self.rule = rule
         self.name = name
 
-    def __str__(self):
+    def __str__(self) -> str:
         return "{} seems redefine param named {}".format(self.rule, self.name)
 
 
 class ParamMissingException(Exception):
 
-    def __init__(self, rule, name):
+    def __init__(self, rule: str, name: str) -> None:
         self.rule = rule
         self.name = name
 
-    def __str__(self):
+    def __str__(self) -> str:
         return "{} seems miss param named {}".format(self.rule, self.name)
 
 
