@@ -1,5 +1,6 @@
 from nougat import Nougat
-from nougat.routing import get, Routing
+from nougat.routing import Routing
+from nougat.routing import get, post
 
 app = Nougat()
 
@@ -13,6 +14,18 @@ class CommonRouting(Routing):
     @get('/user')
     def user_index(self):
         return 'hello user'
+
+    @get('/named/:id')
+    def simple_type(self):
+        return 'simple'
+
+    @get('/user/:id<[0-9]+>')
+    def named_regex_type(self):
+        return 'named'
+
+    @get('/.*')
+    def unnamed_regex_type(self):
+        return 'unnamed'
 
 
 app.route(CommonRouting)
