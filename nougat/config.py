@@ -20,4 +20,6 @@ class Config(dict):
         :param object_name: the object you wanna load
         :return:
         """
-        # TODO: load from object
+        for key in dir(object_name):
+            if key.isupper():
+                self[key] = getattr(object_name, key)
