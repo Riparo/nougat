@@ -1,7 +1,7 @@
 from typing import Callable, Any, List, TYPE_CHECKING
 from nougat.routing import Route, Routing
 from nougat.parameter import Param, ParameterGroup
-from nougat.utils import CachedProperty
+from nougat.utils import cached_property
 
 
 def param(name: str,
@@ -47,6 +47,6 @@ class ResourceRouting(Routing):
     def abort(self, code: int, message: str = None) -> None:
         pass
 
-    @CachedProperty
+    @cached_property
     def params(self):
         pass
