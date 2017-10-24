@@ -58,7 +58,7 @@ class NougatRuntimeError(Exception):
 class HandlerRedefineException(Exception):
 
     def __init__(self, section, handler):
-        self.section =section
+        self.section = section
         self.handler = handler
 
     def __str__(self):
@@ -88,4 +88,17 @@ class ParamMissingException(Exception):
 class ResponseContentCouldNotFormat(Exception):
 
     def __str__(self):
-        return "the content of response could not be formatted as str"
+        return "the content of rescponse could not be formatted as str"
+
+
+class GuarderDoesNotExist(Exception):
+
+    def __init__(self, name):
+        self.name = name
+
+    def __str__(self):
+        return "Guarder < {} > does not exist".format(self.name)
+
+
+class GuarderDoesNotPass(Exception):
+    pass

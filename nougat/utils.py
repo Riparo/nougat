@@ -142,3 +142,17 @@ class CachedProperty(object):
             return self
         value = obj.__dict__[self.func.__name__] = self.func(obj)
         return value
+
+
+def get_all_parameters(func):
+
+    args = list(inspect.signature(func).parameters.items())
+
+    return [arg[0] for arg in args]
+
+
+async def call(func):
+    if not inspect.iscoroutinefunction(func):
+        return func()
+
+    return await func()

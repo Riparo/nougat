@@ -9,12 +9,14 @@ from nougat.protocol import HttpProtocol
 from nougat.test_client import TestClient
 from nougat.section import Section
 from nougat.exceptions import *
-from nougat.utils import is_middleware
+from nougat.utils import is_middleware, response_format
 from nougat.config import Config
 
-from typing import List, Tuple, TypeVar, Type, Set
+from typing import List, Tuple, TypeVar, Type, Set, Union, Callable
 from nougat.context import Request, Response
 from nougat.routing import Routing, Route, Router
+
+from nougat.guarder import GuarderManager
 
 try:
     import uvloop
@@ -31,13 +33,15 @@ class Nougat(object):
     def __init__(self, name='Nougat APP') -> None:
 
         self.name = name
-        self.__test_client = None
         self.router: 'Router' = Router()
 
         self.config = Config()
         self.__middleware_chain = []
 
         self.sections = {}
+
+        self.guarder = GuarderManager()  # Guarder Manager
+        self.guarder.guard(self, 'app')
 
         # new version
         self.__routes: Set[Tuple('Routing', 'Route')] = set()
@@ -51,37 +55,35 @@ class Nougat(object):
         middleware = middleware
         self.__middleware_chain.append(middleware)
 
+    def guarders(self, guarders: Union[List[Callable], Callable]):
+        if not isinstance(guarders, list):
+            guarders = [guarders]
+
+        for guarder in guarders:
+            # TODO: check redefinition
+            self.guarder.guard(guarder)
+
     async def handler(self, request, handler_future):
 
-        # try:
-        #     # find route
-        #     route = self.router.get(context)
-        #     if not route:
-        #         raise HttpException(None, 404)
-        #
-        #     section = self.sections.get(route.section_name)
-        #     context.generate_params(route)
-        #
-        #     handler = partial(section.handler, context=context, route=route)
-        #
-        #     for middleware in self.chain:
-        #         handler = partial(middleware, ctx=context, next=handler)
-        #
-        #     await handler()
-        #
-        # except HttpException as e:
-        #
-        #     context.status = e.status
-        #     context.res = e.body
-        #
-        # handler_future.set_result(context)
         response = Response()
 
         try:
 
-            routing, route = self.router.match(request.method,  request.url.path)
-            routing = routing(request, response)
-            controller_res = route.controller(routing)
+            routing_class, route = self.router.match(request.method, request.url.path)
+            routing = routing_class(request, response)
+
+            # guarders
+            with self.guarder.guard_context(routing):
+                controller = await self.guarder.generator(route.controller)
+
+            # TODO: operation divided by asynchronous and synchronous controllers
+            controller_res = await controller(routing)
+
+            try:
+                _, controller_res = response_format(controller_res)
+            except ResponseContentCouldNotFormat:
+                controller_res = "unable to format response"
+
         except RouteNoMatchException:
             response.status = 404
             controller_res = ''
@@ -89,12 +91,6 @@ class Nougat(object):
         response.res = controller_res
 
         handler_future.set_result(response)
-
-    @property
-    def test(self):
-        if not self.__test_client:
-            return TestClient(self)
-        return self.__test_client
 
     def run(self, host="127.0.0.1", port=8000, debug=False, loop=None):
         # Create Event Loop
