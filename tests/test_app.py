@@ -1,24 +1,13 @@
-from nougat import Nougat, Section
-from nougat.exceptions import NougatRuntimeError, UnknownSectionException
+from nougat import Nougat
 from nougat.routing import Routing, get
-import json
-import pytest
-import asyncio
+from nougat.test_client import TestClient
 
 
-class TestBasicApplication(object):
+class TestBasicApplication:
 
-    app = None
+    def test_asyncio(self):
 
-    @pytest.mark.asyncio
-    def setup_method(self, event_loop):
-        self.app = Nougat().test
-        self.app.listen(loop=event_loop)
-
-
-    @pytest.mark.asyncio
-    async def test_asyncio(self):
-        print(self.app)
+        app = Nougat()
 
         class Basic(Routing):
 
@@ -26,12 +15,12 @@ class TestBasicApplication(object):
             async def index(self):
                 return '123'
 
-        with self.app.register(Basic):
+        app.route(Basic)
+        print("start running Test Case")
+        res = TestClient(app).get('/')
+        print(res)
+        assert res.text == '123'
 
-
-            resp = await self.app.get('/')
-
-            assert resp.text == '123'
 #
 # def test_use_not_section_instance():
 #     with pytest.raises(NougatRuntimeError):
@@ -137,3 +126,18 @@ class TestBasicApplication(object):
 #     await asyncio.sleep(10)
 #
 #     assert 1 == 2
+
+
+app = Nougat()
+
+class Basic(Routing):
+
+    @get('/')
+    async def index(self):
+        return '123'
+
+app.route(Basic)
+print("start running Test Case")
+res = TestClient(app).get('/')
+print(res)
+print(res.res_text)
