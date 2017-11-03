@@ -2,7 +2,6 @@ import aiohttp
 import asyncio
 from functools import partial
 from yarl import URL
-from nougat.protocol import HttpProtocol
 try:
     import uvloop
 except:

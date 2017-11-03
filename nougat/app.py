@@ -1,13 +1,5 @@
-import asyncio
 import logging
-import signal
-import sys
-import inspect
-from contextlib import contextmanager
 from functools import partial
-from nougat.protocol import HttpProtocol
-from nougat.test_client import TestClient
-from nougat.section import Section
 from nougat.exceptions import *
 from nougat.utils import is_middleware, response_format
 from nougat.config import Config
@@ -18,12 +10,10 @@ from nougat.routing import Routing, Route, Router
 
 from nougat.guarder import GuarderManager
 
-try:
-    import uvloop
-except:
-    uvloop = asyncio
+import curio
 
-__all__ = ['Nougat']
+from nougat.http_wrapper import HTTPWrapper
+
 
 RoutingType = TypeVar('RoutingType', bound=Routing)
 
@@ -48,7 +38,8 @@ class Nougat(object):
 
     def use(self, middleware):
         """
-        register middleware
+        Register Middleware
+        :param middleware: The Middleware Function
         """
 
         is_middleware(middleware)
@@ -56,6 +47,11 @@ class Nougat(object):
         self.__middleware_chain.append(middleware)
 
     def guarders(self, guarders: Union[List[Callable], Callable]):
+        """
+        Register Guarder function
+        :param guarders: The Guarder Function
+        """
+
         if not isinstance(guarders, list):
             guarders = [guarders]
 
@@ -63,72 +59,67 @@ class Nougat(object):
             # TODO: check redefinition
             self.guarder.guard(guarder)
 
-    async def handler(self, request, handler_future):
+    async def handler(self, request: 'Request'):
+        """
+        The handler handling each request
+        :param request: the Request instance
+        :return: The Response instance
+        """
 
         response = Response()
 
         try:
 
+            # match the Routing and Route from Router
             routing_class, route = self.router.match(request.method, request.url.path)
             routing = routing_class(request, response)
 
-            # guarders
+            # Guarder Processes
             with self.guarder.guard_context(routing):
                 controller = await self.guarder.generator(route.controller)
 
-            # TODO: operation divided by asynchronous and synchronous controllers
-            controller_res = await controller(routing)
+            # Handling Middleware
+            handler = partial(controller, routing)
 
-            try:
-                _, controller_res = response_format(controller_res)
-            except ResponseContentCouldNotFormat:
-                controller_res = "unable to format response"
+            chain_reverse = self.__middleware_chain[::-1]
+            for middleware in chain_reverse:
+                handler = partial(middleware, context=routing, next=handler)
+
+            controller_res = await handler()
+
+            # Formatting the Response data
+            res_type, controller_res = response_format(controller_res)
+
+        except ResponseContentCouldNotFormat:
+            res_type = 'text/plain'
+            controller_res = "unable to format response"
 
         except RouteNoMatchException:
             response.status = 404
-            controller_res = ''
+            res_type = 'text/plain'
+            controller_res = None
 
+        response.type = res_type
         response.res = controller_res
 
-        handler_future.set_result(response)
+        return response
 
-    def run(self, host="127.0.0.1", port=8000, debug=False, loop=None):
-        # Create Event Loop
-        loop = loop or uvloop.new_event_loop()
-        asyncio.set_event_loop(loop)
-        loop.set_debug(debug)
+    def run(self, host: str="localhost", port: int=8000, debug: bool=False):
+        """
+        start the http server
+        :param host: The listening host
+        :param port: The listening port
+        :param debug: whether it is in debug mod or not
+        :return:
+        """
 
-
-        def ask_exit():
-            loop.stop()
-
-        if sys.platform != 'win32':
-            for signame in ('SIGINT', 'SIGTERM'):
-                loop.add_signal_handler(getattr(signal, signame), ask_exit)
-
-        server_coroutine = loop.create_server(partial(HttpProtocol, loop=loop, app=self), host, port)
-        server_loop = loop.run_until_complete(server_coroutine)
-        try:
-            print("server http://{}:{} is running, press Ctrl+C to interrupt.".format(host, port))
-            loop.run_forever()
-        finally:
-            server_coroutine.close()
-            loop.close()
-
-    @contextmanager
-    def create_server(self, loop, host="127.0.0.1", port=8000):
-
-        server_coroutine = loop.create_server(partial(HttpProtocol, loop=loop, app=self), host, port)
-        yield
-        server_coroutine.close()
-
-    def stop(self):
-        asyncio.get_event_loop().stop()
+        print("Nougat is listening on http://{}:{}".format(host, port))
+        curio.run(curio.tcp_server, host, port, self.http_serve)
 
     def doc(self):
         """
         generate the api document
-        :return: 
+        :return: the json of api structure
         """
         return {
             'name': self.name,
@@ -136,7 +127,11 @@ class Nougat(object):
         }
 
     def route(self, routing: Type[RoutingType]):
-
+        """
+        Register Routing class
+        :param routing: Routing Class, not its instance
+        :return:
+        """
         logging.info('adding Routing {}'.format(routing.__class__))
 
         routing_prefix = routing.prefix
@@ -144,3 +139,9 @@ class Nougat(object):
         for route in routing.routes():
             route.route = "{}{}".format(routing_prefix, route.route)
             self.router.add_routing(routing, route)
+
+    async def http_serve(self, sock, address):
+        """
+        the income function of curio.tcp_server
+        """
+        await HTTPWrapper(sock, address).process(self)

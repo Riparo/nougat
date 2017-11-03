@@ -39,14 +39,15 @@ def is_env_format(match, dict):
 def response_format(content):
     """
     format different type contents as str
+    :return THE_TYPE_OF_CONTENT, CONTENT_FORMATTED
     """
     if isinstance(content, str):
-        return "str", content
+        return "text/plain", content
     elif isinstance(content, list) or isinstance(content, dict):
-        return "json", json.dumps(content)
+        return "application/json", json.dumps(content)
     else:
         try:
-            return "str", str(content)
+            return "text/plain", str(content)
         except:
             raise ResponseContentCouldNotFormat()
 

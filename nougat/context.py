@@ -294,7 +294,7 @@ if TYPE_CHECKING:
 
 class Request:
 
-    def __init__(self, app: 'Nougat', path: bytes, headers: Dict[str, str], ip: str, version: str, method: str, body: bytes):
+    def __init__(self, app: 'Nougat', path: str, headers: Dict[str, str], ip: str, version: str, method: str, body: bytes):
 
         self.app = app
         self.__headers = headers
@@ -302,7 +302,7 @@ class Request:
         self.version = version
         self.form = {}
         self.__original_ip = ip
-        self.url = URL(path.decode())
+        self.url = URL(path)
 
         self.__raw_body = body
 
@@ -376,50 +376,31 @@ class Response:
 
         self.__version = '1.1'
         self.status = status
+
         self.res = ''
-
         self.type = 'text'
-        self.__headers = {}
 
-    @staticmethod
-    def __format_body_to_bytes(body):
-        body_type = type(body)
-        if body_type is str:
-            body = body.encode('utf-8')
-        elif body_type is bytes:
-            body = body
-        else:
-            body = b'Unable to interpret body'
-        return body
+        self.__headers = {}
+        self.__body = ''
 
     @property
     def output(self):
         """
         output the http payload
         """
+        return self.__body.encode("utf-8")
 
-        body = self.__format_body_to_bytes(self.res or STATUS_CODES.get(self.status, 'FAIL'))
+    def output_generator(self):
+        """
+        generate the http response headers and body
+        if output method is called without calling it, the response is always None
+        :return:
+        """
 
-        payload = []
+        self.__body = self.res or STATUS_CODES.get(self.status, 'FAIL')
 
-        # HTTP STATUS
-        payload.append(
-            'HTTP/{} {} {}\r\n'.format(self.__version, self.status, STATUS_CODES.get(self.status, 'FAIL')).encode(
-                'latin-1'))
-
-        # CONTENT TYPE AND LENGTH
-        payload.append('Content-Type: {};charset=utf-8\r\n'.format(self.type).encode('latin-1'))
-        payload.append('Content-Length: {}\r\n'.format(len(body)).encode('latin-1'))
-
-        # HEADERS OF LOCATION OR COOKIES
-        headers = ["{}: {}\r\n".format(key, value).encode('utf-8') for key, value in self.__headers.items()]
-        payload.extend(headers)
-
-        # RESPONSE BODY
-        payload.append(b'\r\n')
-        payload.append(body)
-
-        return b''.join(payload)
+        self.set_header('Content-Type', "{};charset=utf-8".format(self.type))
+        self.set_header('Content-Length', '{}'.format(len(self.__body)))
 
     def set_header(self, key, value):
         """
@@ -460,3 +441,7 @@ class Response:
             header_value = "{}; SameSite={}".format(header_value, same_site)
 
         self.set_header("Set-Cookie", header_value)
+
+    @property
+    def header_as_list(self):
+        return [(key, value) for key, value in self.__headers.items()]

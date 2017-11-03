@@ -29,9 +29,8 @@ setup(
     packages=['nougat'],
 
     install_requires=[
-        'httptools>=0.0.9',
-        'aiofiles>=0.3.0',
-        'aiohttp>=2.0.7',
+        'curio',
+        'h11',
         'click>=6.7.0'
     ],
 

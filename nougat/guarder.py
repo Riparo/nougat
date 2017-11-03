@@ -29,7 +29,6 @@ class GuarderManager:
             sub_guarder = await self.__generator(sub_guarder)
 
             func = partial(func, **{arg: sub_guarder})
-        print(func)
         return func
 
     async def __generator(self, guarder):
