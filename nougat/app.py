@@ -33,6 +33,8 @@ class Nougat(object):
         self.guarder = GuarderManager()  # Guarder Manager
         self.guarder.guard(self, 'app')
 
+        self.debug: bool = False
+
         # new version
         self.__routes: Set[Tuple('Routing', 'Route')] = set()
 
@@ -113,7 +115,8 @@ class Nougat(object):
         :return:
         """
 
-        print("Nougat is listening on http://{}:{}".format(host, port))
+        print("Nougat is listening on http://{}:{}\n".format(host, port))
+        self.debug = debug
         curio.run(curio.tcp_server, host, port, self.http_serve)
 
     def doc(self):

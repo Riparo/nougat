@@ -3,6 +3,8 @@ import curio
 import h11
 from typing import TYPE_CHECKING, List, Tuple
 from nougat.context import Request
+from nougat.utils import ConsoleColor
+import datetime
 
 if TYPE_CHECKING:
     from nougat.context import Response
@@ -104,12 +106,25 @@ class HTTPWrapper(object):
         :param app: The Nougat Instance
         :param event: Request Event
         """
+        start_time = datetime.datetime.now()
+
         method, target, headers, body = await self.request_parameters_generator(event)
 
         request: 'Request' = Request(app, target, dict(headers), self.__address[0], '1.1', method, body)
         response: 'Response' = await app.handler(request)
 
-        await self.echo_response(response)
+        response_status = await self.echo_response(response)
+
+        if app.debug:
+            handle_time = int((datetime.datetime.now()-start_time).total_seconds() * 10000)/10
+            print('%s %15s   %12s %14sms   [%s]\t%s' % (
+                start_time.strftime('%Y/%m/%d %I:%M:%S'),
+                ConsoleColor.yellow(method.upper()),
+                ConsoleColor.blue(response_status) if 199 < response_status <= 400 else ConsoleColor.red(response_status),
+                ConsoleColor.green(str(handle_time)),
+                self.__address[0],
+                ConsoleColor.bold(target)
+            ))
 
     async def request_parameters_generator(self, request):
         """
@@ -142,3 +157,5 @@ class HTTPWrapper(object):
         await self.send(h11.Response(status_code=response.status, headers=response.header_as_list))
         await self.send(h11.Data(data=response.output))
         await self.send(h11.EndOfMessage())
+
+        return response.status
