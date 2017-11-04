@@ -11,8 +11,10 @@ from nougat.routing import Routing, Route, Router
 from nougat.guarder import GuarderManager
 
 import curio
-
+import signal
+import threading
 from nougat.http_wrapper import HTTPWrapper
+from nougat.watchdog import AsyncFileWatcher, AsyncFileSystemHandler, AsyncFolderWatcher
 
 
 RoutingType = TypeVar('RoutingType', bound=Routing)
@@ -117,7 +119,7 @@ class Nougat(object):
 
         print("Nougat is listening on http://{}:{}\n".format(host, port))
         self.debug = debug
-        curio.run(curio.tcp_server, host, port, self.http_serve)
+        curio.run(self.__start_service, host, port)
 
     def doc(self):
         """
@@ -142,6 +144,17 @@ class Nougat(object):
         for route in routing.routes():
             route.route = "{}{}".format(routing_prefix, route.route)
             self.router.add_routing(routing, route)
+
+    async def __start_service(self, host: str, port: int):
+
+        async with curio.SignalQueue(signal.SIGINT, signal.SIGTERM) as sig_queue:
+
+            server = await curio.spawn(curio.tcp_server, host, port, self.http_serve)
+
+            await sig_queue.get()  # waiting for signal
+
+            print("preparing shutdown server")
+            await server.cancel()
 
     async def http_serve(self, sock, address):
         """
