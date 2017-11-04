@@ -29,8 +29,8 @@ setup(
     packages=['nougat'],
 
     install_requires=[
-        'curio',
-        'h11',
+        'curio>=0.8',
+        'h11>=0.7.0',
         'click>=6.7.0'
     ],
 

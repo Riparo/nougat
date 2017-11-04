@@ -157,3 +157,50 @@ async def call(func):
         return func()
 
     return await func()
+
+
+class ConsoleColor:
+    PURPLE = '\033[95m'
+    BLUE = '\033[94m'
+    GREEN = '\033[92m'
+    YELLOW = '\033[93m'
+    RED = '\033[91m'
+    END = '\033[0m'
+    BOLD = '\033[1m'
+    UNDERLINE = '\033[4m'
+
+    @staticmethod
+    def color_generator(color, text: str, bold: bool=False, underline: bool=False):
+
+        origin: str = str(text)
+        origin = color + origin + ConsoleColor.END
+        if bold:
+            origin = ConsoleColor.bold(origin)
+        if underline:
+            origin = ConsoleColor.UNDERLINE + origin + ConsoleColor.END
+
+        return origin
+
+    @staticmethod
+    def blue(text: str, bold: bool=False, underline: bool=False):
+        return ConsoleColor.color_generator(ConsoleColor.BLUE, text, bold, underline)
+
+    @staticmethod
+    def purple(text: str, bold: bool=False, underline: bool=False):
+        return ConsoleColor.color_generator(ConsoleColor.PURPLE, text, bold, underline)
+
+    @staticmethod
+    def green(text: str, bold: bool=False, underline: bool=False):
+        return ConsoleColor.color_generator(ConsoleColor.GREEN, text, bold, underline)
+
+    @staticmethod
+    def yellow(text: str, bold: bool=False, underline: bool=False):
+        return ConsoleColor.color_generator(ConsoleColor.YELLOW, text, bold, underline)
+
+    @staticmethod
+    def red(text: str, bold: bool=False, underline: bool=False):
+        return ConsoleColor.color_generator(ConsoleColor.RED, text, bold, underline)
+
+    @staticmethod
+    def bold(text: str):
+        return ConsoleColor.BOLD + text + ConsoleColor.END

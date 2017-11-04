@@ -16,6 +16,7 @@ class TestBasicApplication:
                 return '123'
 
         app.route(Basic)
+
         print("start running Test Case")
         res = TestClient(app).get('/')
         print(res)
