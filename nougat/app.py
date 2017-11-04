@@ -142,7 +142,7 @@ class Nougat(object):
         routing_prefix = routing.prefix
 
         for route in routing.routes():
-            route.route = "{}{}".format(routing_prefix, route.route)
+            route.set_prefix(routing_prefix)
             self.router.add_routing(routing, route)
 
     async def start_server(self, host: str, port: int):

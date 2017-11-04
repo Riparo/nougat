@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Callable, Any, List, Optional, Tuple, TypeVar, Type
+from typing import TYPE_CHECKING, Callable, Any, List, Optional, Tuple, TypeVar, Type, Set, Dict
 import re
 from nougat.exceptions import ParamRedefineException, ParamMissingException, RouteNoMatchException, HttpException
 from nougat.parameter import Param
@@ -14,7 +14,7 @@ def __method_generator(method: str, route: str) -> Callable:
 
         if isinstance(controller, Route):
             controller.method = method
-            controller.route = route
+            controller.add_route(method, route)
             return controller
         else:
             return Route(method, route, controller)
@@ -50,12 +50,16 @@ def delete(route: str) -> Callable:
 class Route:
 
     def __init__(self, method: str, route: str, controller: Callable) -> None:
-        self.method: str = method.upper()
-        self.__route: str = route
+
+        self.__route_prefix = ''
+
+        self.__route: Set[Tuple[str, str]] = set()
+        self.__route.add((method.upper(), route))
+
         self.controller: Callable = controller
         self.params = {}
 
-        self.__route_pattern_generator()
+        self.__route_pattern: List[Tuple[str, Any]] = []
 
     def add_param(self,
                   name: str,
@@ -69,33 +73,40 @@ class Route:
                   ) -> None:
 
         if name in self.params:
-            raise ParamRedefineException(self.route, name)
+            raise ParamRedefineException(" / ".join(self.route[1]), name)
 
         self.params[name] = Param(type, location, optional, default, action, append, description)
 
     def __route_pattern_generator(self):
         if self.__route:
-            parameters: List[Tuple[str, str, str, str]] = DYNAMIC_ROUTE_PATTERN.findall(self.__route)
-            parameters_pattern: List[Tuple[str, str]] = [(old, "(?P<{}>{})".format(name, pattern or '[^/]+')) for (old, name, _, pattern) in parameters]
-            route_pattern: str = self.__route
-            for old, param_pattern in parameters_pattern:
-                route_pattern = route_pattern.replace(old, param_pattern)
+            self.__route_pattern = []
+            for method, route in self.__route:
+                route = '{}{}'.format(self.__route_prefix, route)
+                parameters: List[Tuple[str, str, str, str]] = DYNAMIC_ROUTE_PATTERN.findall(route)
+                parameters_pattern: List[Tuple[str, str]] = [(old, "(?P<{}>{})".format(name, pattern or '[^/]+')) for (old, name, _, pattern) in parameters]
+                route_pattern: str = route
+                for old, param_pattern in parameters_pattern:
+                    route_pattern = route_pattern.replace(old, param_pattern)
 
-            self.__route_pattern = re.compile(route_pattern)
+                self.__route_pattern.append((method, re.compile(route_pattern)))
 
-    @property
-    def route(self) -> str:
-        return self.__route
+    def set_prefix(self, prefix: str):
+        self.__route_prefix = prefix
 
-    @route.setter
-    def route(self, value):
-
-        self.__route = value
         self.__route_pattern_generator()
 
+    @property
+    def route(self) -> List[Tuple[str, str]]:
+        return list(self.__route)
+
+    def add_route(self, method: str, route: str):
+        self.__route.add((method, route))
+
     def match(self, method: str, route: str) -> bool:
-        if self.method == method and self.__route_pattern.fullmatch(route):
-            return True
+        for _method, pattern in self.__route_pattern:
+
+            if _method == method and pattern.fullmatch(route):
+                return True
 
         return False
 
@@ -156,7 +167,6 @@ class Routing:
         for attr_name in dir(cls):
             attr = getattr(cls, attr_name)
             if isinstance(attr, Route):
-                logging.debug("Routing {} has Route {} {}".format(cls.__class__, attr.method, attr.route))
                 routes.append(attr)
 
         return routes
