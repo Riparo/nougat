@@ -1,17 +1,14 @@
-import aiohttp
-import asyncio
 from functools import partial
+from nougat.context import Request
 from yarl import URL
-try:
-    import uvloop
-except:
-    uvloop = asyncio
-
+import requests
+import curio
 __all__ = ['TestClient']
 
 
 HOST = '127.0.0.1'
 PORT = 40404
+
 
 
 class Proxy:
@@ -26,46 +23,25 @@ class TestClient:
 
     def __init__(self, app):
         self.app = app
-        self.loop = asyncio.new_event_loop()
         self.server = None
 
-    def listen(self, loop):
-        self.server = loop.create_server(partial(HttpProtocol, loop=self.loop, app=self.app), HOST)
-        print('hello')
+    async def real_request(self):
+        print("doing it")
+        return requests.get("http://localhost:40404/")
 
-    def __request_callback(self, future):
-        self.res = future.result()
-        print("123")
-        asyncio.get_event_loop().stop()
-
-    async def __local_request(self, future, method, url, cookies=None, *args, **kwargs):
-        url = 'http://{host}:{port}{uri}'.format(host=HOST, port=PORT, uri=url)
-        async with aiohttp.ClientSession(loop=self.loop, cookies=cookies) as session:
-            async with getattr(session, method)(url, *args, **kwargs) as response:
-                response.res_text = await response.text()
-                future.set_result(response)
+    async def async_request(self, proxy):
+        async with curio.timeout_after(10):
+            server = await curio.spawn(self.app.start_server, HOST, PORT)
+            await curio.sleep(1)
+            proxy.ret = await self.real_request()
+            print("done")
+        await server.cancel()
 
     def __request(self, method, url, *args, **kwargs):
+        p = Proxy()
+        curio.run(self.async_request, p)
 
-        asyncio.set_event_loop(self.loop)
-
-        server_coroutine = self.loop.create_server(partial(HttpProtocol, loop=self.loop, app=self.app), HOST, PORT)
-        server_loop = self.loop.run_until_complete(server_coroutine)
-        # set request
-        request_future = asyncio.Future()
-        asyncio.ensure_future(self.__local_request(request_future, method, url, *args, **kwargs), loop=self.loop)
-        request_future.add_done_callback(self.__request_callback)
-        #
-        print("server loop start")
-
-        print("request future start")
-        # self.loop.run_until_complete(request_future)
-        # self.loop.run_until_complete(asyncio.gather([server_coroutine, request_future]))
-        self.loop.run_forever()
-        print("123")
-        server_loop.close()
-
-        return self.res
+        return p.ret
 
     def head(self, url, *args, **kwargs):
         return self.__request('head', url, *args, **kwargs)

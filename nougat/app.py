@@ -116,10 +116,10 @@ class Nougat(object):
         :param debug: whether it is in debug mod or not
         :return:
         """
-
-        print("Nougat is listening on http://{}:{}\n".format(host, port))
+        if debug:
+            print("Nougat is listening on http://{}:{}\n".format(host, port))
         self.debug = debug
-        curio.run(self.__start_service, host, port)
+        curio.run(self.start_server, host, port)
 
     def doc(self):
         """
@@ -145,7 +145,7 @@ class Nougat(object):
             route.route = "{}{}".format(routing_prefix, route.route)
             self.router.add_routing(routing, route)
 
-    async def __start_service(self, host: str, port: int):
+    async def start_server(self, host: str, port: int):
 
         async with curio.SignalQueue(signal.SIGINT, signal.SIGTERM) as sig_queue:
 
