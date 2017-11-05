@@ -11,9 +11,7 @@ pip3 install nougat
 ```
 #### Develop Version
 if you wanna test the new feature of Nougat, you can install it from Github:
-<p class="warning">
-  In Develop Verson it would has some unknown bugs and unstable factors, SO PLEASE CHOOSE IT DELIBERATELY!
-</p>
+**In Develop Verson it would has some unknown bugs and unstable factors, SO PLEASE CHOOSE IT DELIBERATELY!**
 ```bash
 pip3 install git@github.com:Kilerd/nougat.git@develop
 ```
