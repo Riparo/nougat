@@ -1,14 +1,6 @@
-import aiohttp
-import asyncio
-from functools import partial
 from yarl import URL
-from nougat.protocol import HttpProtocol
-try:
-    import uvloop
-except:
-    uvloop = asyncio
-
-
+import requests
+import curio
 __all__ = ['TestClient']
 
 
@@ -24,56 +16,29 @@ class TestClient:
     app = None
     loop = None
     server = None
+    res = None
 
-    def __init__(self, app=None):
+    def __init__(self, app):
         self.app = app
-        self.loop = uvloop.new_event_loop()
         self.server = None
 
-    def __request(self, method, url, cookies=None, *args, **kwargs):
+    async def real_request(self):
+        print("doing it")
+        return requests.get("http://localhost:40404/")
 
-        ret = Proxy()
+    async def async_request(self, proxy):
+        async with curio.timeout_after(10):
+            server = await curio.spawn(self.app.start_server, HOST, PORT)
+            await curio.sleep(1)
+            proxy.ret = await self.real_request()
+            print("done")
+        await server.cancel()
 
-        async def test_middleware(ctx, next):
-            await next()
-            ctx.app.ctx = ctx
+    def __request(self, method, url, *args, **kwargs):
+        p = Proxy()
+        curio.run(self.async_request, p)
 
-        def response_builder(_ret):
-            def _response(future):
-                _ret.ret = future.result()
-                asyncio.get_event_loop().stop()
-            return _response
-
-        response_function = response_builder(ret)
-
-        async def __local_request(method, url, future, *args, **kwargs):
-
-            url = 'http://{host}:{port}{uri}'.format(host=HOST, port=PORT, uri=url)
-            async with aiohttp.ClientSession(loop=self.loop, cookies=cookies) as session:
-                async with getattr(session, method)(url, *args, **kwargs) as response:
-                    response.text = await response.text()
-                    future.set_result(response)
-                    asyncio.get_event_loop().stop()
-
-        self.app.chain.append(test_middleware)
-        asyncio.set_event_loop(self.loop)
-
-        server_coroutine = self.loop.create_server(partial(HttpProtocol, loop=self.loop, app=self.app), HOST, PORT)
-        server_loop = self.loop.run_until_complete(server_coroutine)
-
-        # set request
-        request_future = asyncio.Future()
-        asyncio.ensure_future(__local_request(method, url, request_future, *args, **kwargs), loop=self.loop)
-        request_future.add_done_callback(response_function)
-        self.loop.run_until_complete(request_future)
-
-        self.loop.run_forever()
-
-        server_loop.close()
-        if not hasattr(self.app, "ctx"):
-            self.app.ctx = None
-
-        return ret.ret, self.app.ctx
+        return p.ret
 
     def head(self, url, *args, **kwargs):
         return self.__request('head', url, *args, **kwargs)

@@ -30,10 +30,16 @@ class UnknownMiddlewareException(Exception):
         return self.err
 
 
-class UnknownSectionException(Exception): pass
+class UnknownSectionException(Exception):
+    pass
 
 
-class UnknownRouterException(Exception): pass
+class RouteNoMatchException(Exception):
+    pass
+
+
+class UnknownRouterException(Exception):
+    pass
 
 
 class RouteReDefineException(Exception):
@@ -55,7 +61,7 @@ class NougatRuntimeError(Exception):
 class HandlerRedefineException(Exception):
 
     def __init__(self, section, handler):
-        self.section =section
+        self.section = section
         self.handler = handler
 
     def __str__(self):
@@ -64,25 +70,38 @@ class HandlerRedefineException(Exception):
 
 class ParamRedefineException(Exception):
 
-    def __init__(self, rule, name):
+    def __init__(self, rule: str, name: str) -> None:
         self.rule = rule
         self.name = name
 
-    def __str__(self):
+    def __str__(self) -> str:
         return "{} seems redefine param named {}".format(self.rule, self.name)
 
 
 class ParamMissingException(Exception):
 
-    def __init__(self, rule, name):
+    def __init__(self, rule: str, name: str) -> None:
         self.rule = rule
         self.name = name
 
-    def __str__(self):
+    def __str__(self) -> str:
         return "{} seems miss param named {}".format(self.rule, self.name)
 
 
 class ResponseContentCouldNotFormat(Exception):
 
     def __str__(self):
-        return "the content of response could not be formatted as str"
+        return "the content of rescponse could not be formatted as str"
+
+
+class GuarderDoesNotExist(Exception):
+
+    def __init__(self, name):
+        self.name = name
+
+    def __str__(self):
+        return "Guarder < {} > does not exist".format(self.name)
+
+
+class GuarderDoesNotPass(Exception):
+    pass

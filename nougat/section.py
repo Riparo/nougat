@@ -130,3 +130,9 @@ class Section:
             handler = partial(middleware, ctx=context, next=handler)
 
         await handler()
+
+    def doc(self):
+        return {
+            'name': self.name,
+            'api': self.router.list()
+        }

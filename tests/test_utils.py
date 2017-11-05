@@ -5,14 +5,14 @@ from nougat.utils import *
 
 def test_not_awaitable_middleware():
     with pytest.raises(UnknownMiddlewareException):
-        def test_middleware(ctx, next):
+        def test_middleware(context, next):
             pass
         is_middleware(test_middleware)
 
 
 def test_3_or_more_params():
     with pytest.raises(UnknownMiddlewareException):
-        async def test_middleware(ctx, next, more):
+        async def test_middleware(context, next, more):
             pass
 
         is_middleware(test_middleware)
@@ -28,7 +28,7 @@ def test_first_param_is_not_ctx():
 
 def test_second_param_is_not_next():
     with pytest.raises(UnknownMiddlewareException):
-        async def test_middleware(ctx, nextt):
+        async def test_middleware(context, nextt):
             pass
 
         is_middleware(test_middleware)
@@ -36,7 +36,7 @@ def test_second_param_is_not_next():
 
 def test_use_pass_middleware():
 
-    async def test(ctx, next):
+    async def test(context, next):
         pass
 
     is_middleware(test)

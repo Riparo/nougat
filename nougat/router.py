@@ -128,11 +128,20 @@ class Router:
 
             self.dynamic_routes[method].extend(router.dynamic_routes[method])
 
+    def list(self):
+        apis = []
+        for method in METHODS:
+            for _, route in self.fixed_routes[method].items():
+                apis.append(route.doc())
+            for route in self.dynamic_routes[method]:
+                apis.append(route.doc())
+
+        return apis
+
 
 class Param:
 
-    def __init__(self, name, type, location=None, optional=False, default=None, action=None, append=False, description=None):
-        self.name = name  # name
+    def __init__(self, type, location=None, optional=False, default=None, action=None, append=False, description=None):
         self.type = type  # type or [type, type]
         self.location = location  # cookies, query, form, headers
         self.optional = optional  # true, false
@@ -199,7 +208,6 @@ class DynamicRoute(Route):
                 if _param:
                     value = _param.default
 
-
             if not value:
                 raise Exception()  # TODO param miss exception
 
@@ -210,6 +218,11 @@ class DynamicRoute(Route):
             url_ret = "{}?{}".format(url_ret, "&".join(["{}={}".format(key, value) for key, value in kwargs.items()]))
 
         return url_ret
+
+    def doc(self):
+        return {
+            'rule': self.rule
+        }
 
 
 class StaticRoute(Route):
@@ -227,3 +240,8 @@ class StaticRoute(Route):
         if kwargs:
             url_ret = "{}?{}".format(url_ret, "&".join(["{}={}".format(key, value) for key, value in kwargs.items()]))
         return url_ret
+
+    def doc(self):
+        return {
+            'rule': self.rule
+        }

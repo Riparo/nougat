@@ -1,18 +1,46 @@
 <!DOCTYPE html>
 <html>
+
 <head>
-  <title>Nougat</title>
-  <meta charset="UTF-8">
-  <link rel="stylesheet" href="statics/vue.css">
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0" />
+  <title>./docs</title>
+  <link rel="stylesheet" href="https://unpkg.com/docute@3/dist/docute.css">
 </head>
+
 <body>
   <div id="app"></div>
+  <script src="https://unpkg.com/docute@3/dist/docute.js"></script>
+  <script src="https://unpkg.com/prismjs/components/prism-python.js"></script>
+  <script>
+    docute.init({
+      tocVisibleDepth: 3,
+      home: '/languages/english/readme.md',
+      nav: {
+        default: [
+          { title: 'Home', path: '/languages/english/' },
+          { title: 'Rest Extension', path: '/languages/english/rest' },
+          {
+            title: 'Languages', type: 'dropdown', items: [
+              { title: 'English', path: '/languages/english/' },
+              { title: '简体中文', path: '/languages/chinese/' }
+            ]
+          }
+        ],
+        chinese: [
+        { title: '首页', path: '/languages/chinese/' },
+          { title: 'Restful API 扩展', path: '/languages/chinese/rest' },
+          {
+            title: '语言', type: 'dropdown', items: [
+              { title: 'English', path: '/languages/english/' },
+              { title: '简体中文', path: '/languages/chinese/' }
+            ]
+          }
+        ]
+      }
+    })
+  </script>
 </body>
-<script>
-  window.$docsify = {
-    subMaxLevel: 3
-  }
-</script>
-<script src="statics/docsify.min.js"></script>
-<script src="statics/prim-python.min.js"></script>
+
 </html>

@@ -1,114 +1,161 @@
-import asyncio
 import logging
-import signal
-import sys
-import inspect
 from functools import partial
-from nougat.router import Router, Param
-from nougat.protocol import HttpProtocol
-from nougat.test_client import TestClient
-from nougat.section import Section
 from nougat.exceptions import *
-from nougat.utils import is_middleware
+from nougat.utils import is_middleware, response_format
 from nougat.config import Config
 
-try:
-    import uvloop
-except:
-    uvloop = asyncio
+from typing import List, Tuple, TypeVar, Type, Set, Union, Callable
+from nougat.context import Request, Response
+from nougat.routing import Routing, Route, Router
 
-__all__ = ['Nougat']
+from nougat.guarder import GuarderManager
+
+import curio
+import signal
+from nougat.http_wrapper import HTTPWrapper
+
+
+RoutingType = TypeVar('RoutingType', bound=Routing)
 
 
 class Nougat(object):
 
-    def __init__(self, name=None):
+    def __init__(self, name='Nougat APP') -> None:
 
         self.name = name
-        self.__test_client = None
-        self.router = Router(self.name)
+        self.router: 'Router' = Router()
 
         self.config = Config()
-        self.chain = []
+        self.__middleware_chain = []
 
         self.sections = {}
 
-    def use(self, middleware_or_section_name):
-        """
-        register middleware or section 
-        """
-        if isinstance(middleware_or_section_name, Section):
-            # register section
-            section = middleware_or_section_name
-            if section.name in self.sections:
-                raise NougatRuntimeError("it seems that this section's name had been used")
-            logging.debug("register section {}".format(section.name))
-            self.sections[section.name] = section
+        self.guarder = GuarderManager()  # Guarder Manager
+        self.guarder.guard(self, 'app')
 
-            self.router.union(section.router)
-        elif inspect.isfunction(middleware_or_section_name):
-            # register middleware
-            is_middleware(middleware_or_section_name)
-            middleware = middleware_or_section_name
-            self.chain.insert(0, middleware)
-        else:
-            raise NougatRuntimeError("nougat only can use section instance or middleware function")
+        self.debug: bool = False
 
-    async def handler(self, context, handler_future):
+        # new version
+        self.__routes: Set[Tuple('Routing', 'Route')] = set()
+
+    def use(self, middleware):
+        """
+        Register Middleware
+        :param middleware: The Middleware Function
+        """
+
+        is_middleware(middleware)
+        middleware = middleware
+        self.__middleware_chain.append(middleware)
+
+    def guarders(self, guarders: Union[List[Callable], Callable]):
+        """
+        Register Guarder function
+        :param guarders: The Guarder Function
+        """
+
+        if not isinstance(guarders, list):
+            guarders = [guarders]
+
+        for guarder in guarders:
+            # TODO: check redefinition
+            self.guarder.guard(guarder)
+
+    async def handler(self, request: 'Request'):
+        """
+        The handler handling each request
+        :param request: the Request instance
+        :return: The Response instance
+        """
+
+        response = Response()
 
         try:
-            # find route
-            route = self.router.get(context)
-            if not route:
-                raise HttpException(None, 404)
 
-            section = self.sections.get(route.section_name)
-            context.generate_params(route)
+            # match the Routing and Route from Router
+            routing_class, route = self.router.match(request.method, request.url.path)
+            routing = routing_class(request, response)
 
-            handler = partial(section.handler, context=context, route=route)
+            # Guarder Processes
+            with self.guarder.guard_context(routing):
+                controller = await self.guarder.generator(route.controller)
 
-            for middleware in self.chain:
-                handler = partial(middleware, ctx=context, next=handler)
+            # Handling Middleware
+            handler = partial(controller, routing)
 
-            await handler()
+            chain_reverse = self.__middleware_chain[::-1]
+            for middleware in chain_reverse:
+                handler = partial(middleware, context=routing, next=handler)
 
-        except HttpException as e:
+            controller_res = await handler()
 
-            context.status = e.status
-            context.res = e.body
+            # Formatting the Response data
+            res_type, controller_res = response_format(controller_res)
 
-        handler_future.set_result(context)
+        except ResponseContentCouldNotFormat:
+            res_type = 'text/plain'
+            controller_res = "unable to format response"
 
-    @property
-    def test(self):
-        if not self.__test_client:
-            return TestClient(self)
-        return self.__test_client
+        except RouteNoMatchException:
+            response.status = 404
+            res_type = 'text/plain'
+            controller_res = None
 
-    def run(self, host="127.0.0.1", port=8000, debug=False, loop=None):
-        # Create Event Loop
-        loop = loop or uvloop.new_event_loop()
-        asyncio.set_event_loop(loop)
-        loop.set_debug(debug)
+        response.type = res_type
+        response.res = controller_res
 
+        return response
+
+    def run(self, host: str="localhost", port: int=8000, debug: bool=False):
+        """
+        start the http server
+        :param host: The listening host
+        :param port: The listening port
+        :param debug: whether it is in debug mod or not
+        :return:
+        """
         if debug:
-            logging.basicConfig(level=logging.DEBUG)
+            print("Nougat is listening on http://{}:{}\n".format(host, port))
+        self.debug = debug
+        curio.run(self.start_server, host, port)
 
-        def ask_exit():
-            loop.stop()
+    def doc(self):
+        """
+        generate the api document
+        :return: the json of api structure
+        """
+        return {
+            'name': self.name,
+            'sections': [section.doc() for _, section in self.sections.items()]
+        }
 
-        if sys.platform != 'win32':
-            for signame in ('SIGINT', 'SIGTERM'):
-                loop.add_signal_handler(getattr(signal, signame), ask_exit)
+    def route(self, routing: Type[RoutingType]):
+        """
+        Register Routing class
+        :param routing: Routing Class, not its instance
+        :return:
+        """
+        logging.info('adding Routing {}'.format(routing.__class__))
 
-        server_coroutine = loop.create_server(partial(HttpProtocol, loop=loop, app=self), host, port)
-        server_loop = loop.run_until_complete(server_coroutine)
-        try:
-            print("server http://{}:{} is running, press Ctrl+C to interrupt.".format(host, port))
-            loop.run_forever()
-        finally:
-            server_coroutine.close()
-            loop.close()
+        routing_prefix = routing.prefix
 
-    def stop(self):
-        asyncio.get_event_loop().stop()
+        for route in routing.routes():
+            route.set_prefix(routing_prefix)
+            self.router.add_routing(routing, route)
+
+    async def start_server(self, host: str, port: int):
+
+        async with curio.SignalQueue(signal.SIGINT, signal.SIGTERM) as sig_queue:
+
+            server = await curio.spawn(curio.tcp_server, host, port, self.http_serve)
+
+            await sig_queue.get()  # waiting for signal
+
+            print("preparing shutdown server")
+            await server.cancel()
+
+    async def http_serve(self, sock, address):
+        """
+        the income function of curio.tcp_server
+        """
+        await HTTPWrapper(sock, address).process(self)
