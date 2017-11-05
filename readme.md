@@ -2,31 +2,39 @@
 
 ![PyPI](https://img.shields.io/pypi/pyversions/nougat.svg) ![PyPI](https://img.shields.io/pypi/status/nougat.svg) ![PyPI](https://img.shields.io/pypi/v/nougat.svg) ![PyPI](https://img.shields.io/pypi/l/nougat.svg) ![CircleCI branch](https://img.shields.io/circleci/project/github/Kilerd/nougat/master.svg)
 
-an asynchronous framework which focus on best writing experience of API. The key features are the human friendly definition of parameters, which is divided from the method's logic, and the automatic documents.
+Nougat is an asynchronous web framework based on Python3.6 and curio, which focus on enhancing the experience of asynchronous web developing
 
-## installation
-
+## Installation
+Nougat relays on Python3.6 and DOES NOT support the elder version, which is hosted at Pypi. So you can install stable version through:
 ```bash
-pip install nougat
+pip3 install nougat
+```
+#### Develop Version
+if you wanna test the new feature of Nougat, you can install it from Github:
+<p class="warning">
+  In Develop Verson it would has some unknown bugs and unstable factors, SO PLEASE CHOOSE IT DELIBERATELY!
+</p>
+```bash
+pip3 install git@github.com:Kilerd/nougat.git@develop
 ```
 
-## hello world
-
+### Minimal Usage
 ```python
-from nougat import Nougat, Section
+from nougat import Nougat, Routing, get
 
-app = Nougat(__name__)
-main = Section('main')
+app = Nougat()
 
-@main.get("/")
-async def index_get(ctx):
-    return "123"
+class MainRouting(Routing):
 
-app.use(main)
-app.run(port=8000)
+    @get('/')
+    async def index(self):
+        return 'Hello world'
+
+app.route(MainRouting)
+
+app.run(debug=True)
 ```
 
-then, open http://127.0.0.1:8000, you can see the `123`
 
 ## Document
 
