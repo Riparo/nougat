@@ -1,7 +1,7 @@
 import logging
 from functools import partial
 from nougat.exceptions import *
-from nougat.utils import is_middleware, response_format
+from nougat.utils import is_middleware, controller_result_to_response
 from nougat.config import Config
 
 from typing import List, Tuple, TypeVar, Type, Set, Union, Callable
@@ -83,26 +83,24 @@ class Nougat(object):
             # Handling Middleware
             handler = partial(controller, routing)
 
+            handler = partial(controller_result_to_response, context=routing, next=handler)  # save the result to response res
+
             chain_reverse = self.__middleware_chain[::-1]
             for middleware in chain_reverse:
                 handler = partial(middleware, context=routing, next=handler)
 
-            controller_res = await handler()
+            await handler()
 
             # Formatting the Response data
-            res_type, controller_res = response_format(controller_res)
 
         except ResponseContentCouldNotFormat:
-            res_type = 'text/plain'
-            controller_res = "unable to format response"
+            response.type = 'text/plain'
+            response.res = "unable to format response"
 
         except RouteNoMatchException:
             response.status = 404
-            res_type = 'text/plain'
-            controller_res = None
-
-        response.type = res_type
-        response.res = controller_res
+            response.type = 'text/plain'
+            response.res = None
 
         return response
 

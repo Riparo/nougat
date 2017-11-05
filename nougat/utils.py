@@ -159,6 +159,11 @@ async def call(func):
     return await func()
 
 
+async def controller_result_to_response(context, next):
+    result = await next()
+    context.response.res = result
+
+
 class ConsoleColor:
     PURPLE = '\033[95m'
     BLUE = '\033[94m'

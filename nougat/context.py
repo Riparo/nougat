@@ -376,7 +376,7 @@ class Response:
         self.status = status
 
         self.res = ''
-        self.type = 'text'
+        self.type = 'text/html'
 
         self.__headers = {}
         self.__body = ''
