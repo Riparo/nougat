@@ -1,6 +1,6 @@
 from nougat.utils import get_all_parameters, call
 from nougat.exceptions import GuarderDoesNotExist
-from functools import partialmethod, partial
+from functools import partial
 from contextlib import contextmanager
 
 

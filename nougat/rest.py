@@ -1,4 +1,4 @@
-from typing import Callable, Any, List, TYPE_CHECKING
+from typing import Callable, Any, List
 from nougat.routing import Route, Routing
 from nougat.parameter import Param, ParameterGroup
 from nougat.utils import cached_property

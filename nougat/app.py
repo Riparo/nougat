@@ -12,9 +12,7 @@ from nougat.guarder import GuarderManager
 
 import curio
 import signal
-import threading
 from nougat.http_wrapper import HTTPWrapper
-from nougat.watchdog import AsyncFileWatcher, AsyncFileSystemHandler, AsyncFolderWatcher
 
 
 RoutingType = TypeVar('RoutingType', bound=Routing)

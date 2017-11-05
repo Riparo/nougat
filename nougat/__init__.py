@@ -7,4 +7,4 @@ from nougat.section import *
 from nougat.test_client import *
 from nougat.routing import Routing, get, post, put, delete, patch
 
-__version__ = "0.1.1a1"
+__version__ = "0.2.0"
