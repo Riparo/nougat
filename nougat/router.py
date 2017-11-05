@@ -208,7 +208,6 @@ class DynamicRoute(Route):
                 if _param:
                     value = _param.default
 
-
             if not value:
                 raise Exception()  # TODO param miss exception
 

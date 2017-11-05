@@ -30,13 +30,16 @@ class UnknownMiddlewareException(Exception):
         return self.err
 
 
-class UnknownSectionException(Exception): pass
+class UnknownSectionException(Exception):
+    pass
 
 
-class RouteNoMatchException(Exception): pass
+class RouteNoMatchException(Exception):
+    pass
 
 
-class UnknownRouterException(Exception): pass
+class UnknownRouterException(Exception):
+    pass
 
 
 class RouteReDefineException(Exception):

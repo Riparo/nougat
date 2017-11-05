@@ -1,9 +1,9 @@
-from typing import TYPE_CHECKING, Callable, Any, List, Optional, Tuple, TypeVar, Type, Set, Dict
+from typing import Callable, Any, List, Optional, Tuple, TypeVar, Type, Set, Dict
 import re
-from nougat.exceptions import ParamRedefineException, ParamMissingException, RouteNoMatchException, HttpException
+from nougat.exceptions import ParamRedefineException, RouteNoMatchException, HttpException
 from nougat.parameter import Param
 from functools import lru_cache
-import logging
+
 
 DYNAMIC_ROUTE_PATTERN = re.compile(r"(:(?P<name>[a-zA-Z_]+)(<(?P<regex>.+)>)?)+")
 

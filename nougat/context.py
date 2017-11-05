@@ -1,10 +1,8 @@
-import httptools
 import json
 from yarl import URL
-from urllib.parse import parse_qsl, parse_qs
+from urllib.parse import parse_qs
 from cgi import parse_header, parse_multipart
 from nougat.httpstatus import STATUS_CODES
-from nougat.exceptions import HttpException
 from nougat.utils import cached_property
 from typing import TYPE_CHECKING, Dict
 

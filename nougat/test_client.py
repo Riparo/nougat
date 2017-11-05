@@ -1,5 +1,3 @@
-from functools import partial
-from nougat.context import Request
 from yarl import URL
 import requests
 import curio
@@ -8,7 +6,6 @@ __all__ = ['TestClient']
 
 HOST = '127.0.0.1'
 PORT = 40404
-
 
 
 class Proxy:
