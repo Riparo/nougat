@@ -10,9 +10,8 @@ from nougat.routing import Routing, Route, Router
 
 from nougat.guarder import GuarderManager
 
-import curio
-import signal
 from nougat.http_wrapper import HTTPWrapper
+import asyncio
 
 
 RoutingType = TypeVar('RoutingType', bound=Routing)
@@ -115,7 +114,12 @@ class Nougat(object):
         if debug:
             print("Nougat is listening on http://{}:{}\n".format(host, port))
         self.debug = debug
-        curio.run(self.start_server, host, port)
+        loop = asyncio.new_event_loop()
+        loop.run_until_complete(self.start_server(host, port))
+        try:
+            loop.run_forever()
+        except KeyboardInterrupt:
+            loop.close()
 
     def doc(self):
         """
@@ -143,17 +147,11 @@ class Nougat(object):
 
     async def start_server(self, host: str, port: int):
 
-        async with curio.SignalQueue(signal.SIGINT, signal.SIGTERM) as sig_queue:
+        await asyncio.start_server(self.http_serve, host, port)
 
-            server = await curio.spawn(curio.tcp_server, host, port, self.http_serve)
-
-            await sig_queue.get()  # waiting for signal
-
-            print("preparing shutdown server")
-            await server.cancel()
-
-    async def http_serve(self, sock, address):
+    async def http_serve(self, reader, writer):
         """
         the income function of curio.tcp_server
         """
-        await HTTPWrapper(sock, address).process(self)
+        address = writer.get_extra_info('peername')
+        await HTTPWrapper((reader, writer), address).process(self)

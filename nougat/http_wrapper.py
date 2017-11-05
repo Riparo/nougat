@@ -1,10 +1,9 @@
-from socket import SHUT_WR
-import curio
 import h11
 from typing import TYPE_CHECKING, List, Tuple
 from nougat.context import Request
 from nougat.utils import ConsoleColor
 import datetime
+import asyncio
 
 if TYPE_CHECKING:
     from nougat.context import Response
@@ -18,7 +17,7 @@ class HTTPWrapper(object):
     """
 
     def __init__(self, sock, address):
-        self.__sock = sock
+        self.__reader, self.__writer = sock
         self.__address = address
         self.conn = h11.Connection(our_role=h11.SERVER)
 
@@ -27,21 +26,7 @@ class HTTPWrapper(object):
         close connection
         """
 
-        with self.__sock.blocking() as real_sock:
-            try:
-                real_sock.shutdown(SHUT_WR)
-            except OSError:
-                # They're already gone, nothing to do
-                return
-        async with curio.ignore_after(3):
-            try:
-                while True:
-                    # Attempt to read until EOF
-                    got = await self.__sock.recv(MAX_RECEIVE_LENGTH)
-                    if not got:
-                        break
-            finally:
-                await self.__sock.close()
+        self.__writer.close()
 
     async def send(self, event):
         """
@@ -49,13 +34,14 @@ class HTTPWrapper(object):
         """
         assert type(event) is not h11.ConnectionClosed
         data = self.conn.send(event)
-        await self.__sock.sendall(data)
+        self.__writer.write(data)
+        await self.__writer.drain()
 
     async def _read_from_peer(self):
         if self.conn.they_are_waiting_for_100_continue:
             await self.send(h11.InformationalResponse(status_code=100))
         try:
-            data = await self.__sock.recv(MAX_RECEIVE_LENGTH)
+            data = await self.__reader.read(MAX_RECEIVE_LENGTH)
         except ConnectionError:
             # They've stopped listening. Not much we can do about it here.
             data = b""
@@ -78,15 +64,13 @@ class HTTPWrapper(object):
             if self.conn.our_state == h11.IDLE and self.conn.their_state == h11.IDLE:
 
                 try:
-                    async with curio.timeout_after(10):
-                        event = await self.next_event()
-                        if type(event) is h11.Request:
-
-                            await self.handler(app, event)
-
-                except curio.TaskTimeout:
+                    event = await asyncio.wait_for(self.next_event(), timeout=10)
+                except asyncio.TimeoutError:
                     # Time out Process
                     break
+                else:
+                    if type(event) is h11.Request:
+                        await self.handler(app, event)
 
             elif self.conn.our_state == h11.DONE and self.conn.their_state == h11.DONE:
                 # reuse the connection
