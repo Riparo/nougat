@@ -1,6 +1,0 @@
-- [Nougat](zh-cn/)
-- [快速入门](zh-cn/quickstarted)
-- [部件](zh-cn/section)
-- [中间件](zh-cn/middleware)
-- [参数定义](/zh-cn/params)
-- [测试及文档自动化](tests-docs)
