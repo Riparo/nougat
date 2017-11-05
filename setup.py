@@ -20,7 +20,6 @@ setup(
         'Intended Audience :: Developers',
         'Environment :: Web Environment',
         'License :: OSI Approved :: MIT License',
-        'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
     ],
 
@@ -34,7 +33,7 @@ setup(
         'yarl>=0.13.0',
         'click>=6.7.0'
     ],
-
+    python_requires='>=3.6',
     entry_points='''
         [console_scripts]
         nougat=nougat.script:cli
