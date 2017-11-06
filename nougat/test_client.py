@@ -1,6 +1,7 @@
+import aiohttp
 from yarl import URL
-import requests
-import curio
+import asyncio
+
 __all__ = ['TestClient']
 
 
@@ -16,29 +17,42 @@ class TestClient:
     app = None
     loop = None
     server = None
-    res = None
 
-    def __init__(self, app):
+    def __init__(self, app=None):
         self.app = app
+        self.loop = asyncio.new_event_loop()
         self.server = None
 
-    async def real_request(self):
-        print("doing it")
-        return requests.get("http://localhost:40404/")
-
-    async def async_request(self, proxy):
-        async with curio.timeout_after(10):
-            server = await curio.spawn(self.app.start_server, HOST, PORT)
-            await curio.sleep(1)
-            proxy.ret = await self.real_request()
-            print("done")
-        await server.cancel()
+    async def stop_server(self):
+        loop = asyncio.get_event_loop()
+        print("Stop")
+        loop.stop()
 
     def __request(self, method, url, *args, **kwargs):
-        p = Proxy()
-        curio.run(self.async_request, p)
 
-        return p.ret
+        async def __local_request(method, url, *args, **kwargs):
+
+            server_loop = await self.app.start_server(HOST, PORT)
+
+            url = 'http://{host}:{port}{uri}'.format(host=HOST, port=PORT, uri=url)
+            async with aiohttp.ClientSession(loop=self.loop) as session:
+                async with getattr(session, method)(url, *args, **kwargs) as response:
+                    response.text = await response.text()
+                    server_loop.close()
+                    await server_loop.wait_closed()
+                    return response
+
+        asyncio.set_event_loop(self.loop)
+
+        ret = self.loop.run_until_complete(__local_request(method, url, *args, **kwargs))
+
+        # cancel all task
+        tasks = asyncio.Task.all_tasks()
+        for task in tasks:
+            task.cancel()
+        self.loop.run_until_complete(self.stop_server())
+
+        return ret
 
     def head(self, url, *args, **kwargs):
         return self.__request('head', url, *args, **kwargs)
