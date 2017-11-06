@@ -28,7 +28,7 @@ setup(
     packages=['nougat'],
 
     install_requires=[
-        'curio>=0.8',
+        'aiohttp',
         'h11>=0.7.0',
         'yarl>=0.13.0',
         'click>=6.7.0'
