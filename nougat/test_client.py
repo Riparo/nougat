@@ -38,8 +38,9 @@ class TestClient:
             async with aiohttp.ClientSession(loop=self.loop) as session:
                 async with getattr(session, method)(url, *args, **kwargs) as response:
                     response.text = await response.text()
-                    server_loop.close()
-                    await server_loop.wait_closed()
+                    if server_loop:
+                        server_loop.close()
+                        await server_loop.wait_closed()
                     return response
 
         asyncio.set_event_loop(self.loop)
