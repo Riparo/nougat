@@ -105,3 +105,13 @@ class GuarderDoesNotExist(Exception):
 
 class GuarderDoesNotPass(Exception):
     pass
+
+
+class ParamComingFromUnknownLocation(Exception):
+
+    def __init__(self, name, unexpected_location):
+        self.name = name
+        self.unexpected_location = unexpected_location
+
+    def __str__(self):
+        return "Parameter {} could not be loaded from localtion {}".format(self.name, self.unexpected_location)

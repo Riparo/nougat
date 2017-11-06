@@ -1,9 +1,13 @@
 from typing import Callable, Any, List
+from nougat.exceptions import ParamComingFromUnknownLocation
 
 
 class Param:
 
+    ALL_LOCATION = ['url', 'query', 'form', 'header', 'cookie']
+
     def __init__(self,
+                 name: str,
                  type: Callable[[str], Any],
                  location: (str, List[str]) = None,
                  optional: bool =False,
@@ -12,6 +16,7 @@ class Param:
                  append: bool = False,
                  description: str = None):
 
+        self.name = name
         self.type = type  # type or [type, type]
         self.location = location  # cookies, query, form, headers
         self.optional = optional  # true, false
@@ -25,6 +30,9 @@ class Param:
         # location iterable
         if not isinstance(self.location, list):
             self.location = [self.location]
+        unexpected_location = set(self.location) - set(Param.ALL_LOCATION)
+        if unexpected_location:
+            raise ParamComingFromUnknownLocation(self.name, unexpected_location)
 
 
 class ParameterGroup:
