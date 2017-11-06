@@ -19,6 +19,8 @@ class Param:
         self.action = action  # rename
         self.append = append  # list or not
         self.description = description  # description
+        if self.optional and not self.default:
+            raise ValueError("if you set param optional, then type its default value")
 
         # location iterable
         if not isinstance(self.location, list):
