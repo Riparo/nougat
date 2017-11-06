@@ -30,9 +30,7 @@ class TestClient:
 
     def __request(self, method, url, *args, **kwargs):
 
-        async def __local_request(method, url, *args, **kwargs):
-
-            server_loop = await self.app.start_server(HOST, PORT)
+        async def __local_request(method, url, server_loop, *args, **kwargs):
 
             url = 'http://{host}:{port}{uri}'.format(host=HOST, port=PORT, uri=url)
             async with aiohttp.ClientSession(loop=self.loop) as session:
@@ -44,8 +42,8 @@ class TestClient:
                     return response
 
         asyncio.set_event_loop(self.loop)
-
-        ret = self.loop.run_until_complete(__local_request(method, url, *args, **kwargs))
+        server_loop = self.loop.run_until_complete(self.app.start_server(HOST, PORT))
+        ret = self.loop.run_until_complete(__local_request(method, url, server_loop, *args, **kwargs))
 
         # cancel all task
         tasks = asyncio.Task.all_tasks()
