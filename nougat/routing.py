@@ -75,7 +75,7 @@ class Route:
         if name in self.params:
             raise ParamRedefineException(" / ".join(self.route[1]), name)
 
-        self.params[name] = Param(type, location, optional, default, action, append, description)
+        self.params[name] = Param(name, type, location, optional, default, action, append, description)
 
     def __route_pattern_generator(self):
         if self.__route:
@@ -115,13 +115,11 @@ class Routing:
 
     prefix: str = ''
 
-    def __init__(self, request, response):
+    def __init__(self, app, request, response, route: 'Route'):
         self.request = request
         self.response = response
-
-    def render(self) -> str:
-
-        pass
+        self._route = route
+        self.app = app
 
     def redirect(self, url):
         """
@@ -170,6 +168,16 @@ class Routing:
                 routes.append(attr)
 
         return routes
+
+    async def handler(self, route, controller):
+        """
+        let controller run through the middlewares of routing
+        :param route: which route is this request
+        :param controller: the controller function wrapped with `controller_result_to_response`
+        :return:
+        """
+
+        return controller
 
 
 RoutingType = TypeVar('RoutingType', bound=Routing)

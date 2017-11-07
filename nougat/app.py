@@ -73,16 +73,18 @@ class Nougat(object):
 
             # match the Routing and Route from Router
             routing_class, route = self.router.match(request.method, request.url.path)
-            routing = routing_class(request, response)
+            routing = routing_class(self, request, response, route)
 
             # Guarder Processes
             with self.guarder.guard_context(routing):
                 controller = await self.guarder.generator(route.controller)
 
             # Handling Middleware
-            handler = partial(controller, routing)
+            handler = partial(controller, controller)
 
             handler = partial(controller_result_to_response, context=routing, next=handler)  # save the result to response res
+
+            handler = await routing.handler(route, handler)
 
             chain_reverse = self.__middleware_chain[::-1]
             for middleware in chain_reverse:
@@ -147,7 +149,7 @@ class Nougat(object):
 
     async def start_server(self, host: str, port: int):
 
-        await asyncio.start_server(self.http_serve, host, port)
+        return await asyncio.start_server(self.http_serve, host, port)
 
     async def http_serve(self, reader, writer):
         """

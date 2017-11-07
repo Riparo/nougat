@@ -4,6 +4,15 @@ from nougat.parameter import Param, ParameterGroup
 from nougat.utils import cached_property
 
 
+class ParamDict(dict):
+
+    def __init__(self):
+        super().__init__()
+
+    def __getattr__(self, item):
+        return self.get(item, None)
+
+
 def param(name: str,
           type: Callable[[str], Any],
           location: (str, List[str]) = 'query',
@@ -44,9 +53,44 @@ def params(group: 'ParameterGroup') -> Callable:
 
 class ResourceRouting(Routing):
 
+    def __init__(self, app, request, response, route):
+        super().__init__(app, request, response, route)
+
+        self.params = ParamDict()
+        self.__params_generator()
+        
+
     def abort(self, code: int, message: str = None) -> None:
         pass
 
-    @cached_property
-    def params(self):
-        pass
+    def __params_generator(self):
+        """
+        format the params for resource
+        """
+        print(self._route.params)
+        for name, param_info in self._route.params.items():
+
+            param_name = param_info.action or name
+
+            ret = [] if param_info.append else None
+            #
+            # if is_dynamic and param_info.name in route.url_params_dict:
+            #     self.params.__setattr__(param_name, route.url_params_dict[param_info.name])
+            #     continue
+            #
+            # for location in param_info.location:
+            #     location_value = self.__get_msg(location, param_info.name, param_info.append)
+            #     if param_info.append:
+            #         ret.extend(location_value)
+            #     else:
+            #         if not ret:
+            #             ret = location_value
+            #         else:
+            #             break
+            #
+            # if not ret and param_info.optional:
+            #     ret = param_info.default
+            #
+            # self.params.__set_param__(param_name, ret, param_info.type)
+
+            self.params.__setattr__(param_name, ret)

@@ -6,7 +6,7 @@ __all__ = ['TestClient']
 
 
 HOST = '127.0.0.1'
-PORT = 40404
+PORT = 0
 
 
 class Proxy:
@@ -25,25 +25,24 @@ class TestClient:
 
     async def stop_server(self):
         loop = asyncio.get_event_loop()
-        print("Stop")
         loop.stop()
 
     def __request(self, method, url, *args, **kwargs):
 
-        async def __local_request(method, url, server_loop, *args, **kwargs):
+        async def __local_request(app, method, url, *args, **kwargs):
 
-            url = 'http://{host}:{port}{uri}'.format(host=HOST, port=PORT, uri=url)
+            server_loop = await app.start_server(HOST, PORT)
+            port = server_loop.sockets[0].getsockname()[1]
+            url = 'http://{host}:{port}{uri}'.format(host=HOST, port=port, uri=url)
             async with aiohttp.ClientSession(loop=self.loop) as session:
                 async with getattr(session, method)(url, *args, **kwargs) as response:
                     response.text = await response.text()
-                    if server_loop:
-                        server_loop.close()
-                        await server_loop.wait_closed()
+                    server_loop.close()
+                    await server_loop.wait_closed()
                     return response
 
         asyncio.set_event_loop(self.loop)
-        server_loop = self.loop.run_until_complete(self.app.start_server(HOST, PORT))
-        ret = self.loop.run_until_complete(__local_request(method, url, server_loop, *args, **kwargs))
+        ret = self.loop.run_until_complete(__local_request(self.app, method, url, *args, **kwargs))
 
         # cancel all task
         tasks = asyncio.Task.all_tasks()
