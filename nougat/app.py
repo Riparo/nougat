@@ -80,12 +80,15 @@ class Nougat(object):
                 controller = await self.guarder.generator(route.controller)
 
             # Handling Middleware
-            handler = partial(controller, controller)
+            handler = partial(controller, routing)
 
+            # save the return value to response.res
             handler = partial(controller_result_to_response, context=routing, next=handler)  # save the result to response res
 
+            # Routing Time
             handler = await routing.handler(route, handler)
 
+            # Global Middleware
             chain_reverse = self.__middleware_chain[::-1]
             for middleware in chain_reverse:
                 handler = partial(middleware, context=routing, next=handler)
