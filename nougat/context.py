@@ -298,15 +298,20 @@ class Request:
         self.__headers = headers
         self.method = method
         self.version = version
-        self.form = {}
+        self.__form = {}
         self.__original_ip = ip
         self.url = URL(path)
 
+        self.url_dict = {}
+
+        self.__json = None
         self.__raw_body = body
+        self.req_body = self.__raw_body
+        self.__is_format = False
 
     @cached_property
     def content_type(self):
-        return self.headers.get('Content-Type', '').lower()
+        return self.headers.get('content-type', '').lower()
 
     @property
     def query(self):
@@ -314,7 +319,13 @@ class Request:
 
     @cached_property
     def json(self):
-        pass
+        self.body_formator(self.__raw_body)
+        return self.__json
+
+    @cached_property
+    def form(self):
+        self.body_formator(self.__raw_body)
+        return self.__form
 
     @cached_property
     def ip(self):
@@ -345,27 +356,28 @@ class Request:
         :param body:
         :return:
         """
-        # parse body as json
-        ctype, pdict = parse_header(self.content_type)
+        if not self.__is_format:
+            self.__is_format = True
+            # parse body as json
+            ctype, pdict = parse_header(self.content_type)
+            if ctype == 'application/json':
+                self.__json = json.loads(body.decode())
 
-        if ctype == 'application/json':
-            self.json = json.loads(body.decode())
+            elif ctype == 'application/x-www-form-urlencoded':
+                for key, value in parse_qs(body).items():
+                    self.form[key] = value
 
-        elif ctype == 'application/x-www-form-urlencoded':
-            for key, value in parse_qs(body.decode()).items():
-                self.form[key] = value
+            elif ctype == "multipart/form-data":
+                pdict['boundary'] = bytes(pdict['boundary'], "utf8")
+                import io
 
-        elif ctype == "multipart/form-data":
-            pdict['boundary'] = bytes(pdict['boundary'], "utf8")
-            import io
+                fp = io.BytesIO(body)
+                fields = parse_multipart(fp, pdict)
+                for key, value in fields.items():
+                    self.form[key] = value
 
-            fp = io.BytesIO(body)
-            fields = parse_multipart(fp, pdict)
-            for key, value in fields.items():
-                self.form[key] = value
-
-        else:
-            self.req_body = body.decode()
+            else:
+                self.req_body = body
 
 
 class Response:
@@ -377,6 +389,7 @@ class Response:
 
         self.res = ''
         self.type = 'text/html'
+        self.charset = 'utf-8'
 
         self.__headers = {}
         self.__body = ''
@@ -386,7 +399,7 @@ class Response:
         """
         output the http payload
         """
-        return self.__body.encode("utf-8")
+        return self.__body.encode(self.charset)
 
     def output_generator(self):
         """
@@ -397,7 +410,7 @@ class Response:
 
         self.__body = self.res or STATUS_CODES.get(self.status, 'FAIL')
 
-        self.set_header('Content-Type', "{};charset=utf-8".format(self.type))
+        self.set_header('Content-Type', "{};charset=".format(self.type, self.charset))
         self.set_header('Content-Length', '{}'.format(len(self.__body)))
 
     def set_header(self, key, value):

@@ -1,6 +1,6 @@
 class HttpException(Exception):
 
-    def __init__(self, body, status):
+    def __init__(self, status, body):
         super().__init__()
         self.body = body
         self.status = status

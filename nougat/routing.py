@@ -102,13 +102,13 @@ class Route:
     def add_route(self, method: str, route: str):
         self.__route.add((method, route))
 
-    def match(self, method: str, route: str) -> bool:
+    def match(self, method: str, route: str) -> Tuple[bool, Optional[dict]]:
         for _method, pattern in self.__route_pattern:
+            _match = pattern.fullmatch(route)
+            if _method == method and _match:
+                return True, _match.groupdict()
 
-            if _method == method and pattern.fullmatch(route):
-                return True
-
-        return False
+        return False, None
 
 
 class Routing:
@@ -137,27 +137,6 @@ class Routing:
         """
         raise HttpException(code, message)
 
-    def url_for(self, name, **kwargs):
-        """
-        get the url according to the section name and handler name
-        :param name: a string like section_name.handler_name
-        :return: the url string
-        """
-        # TODO url for function
-        _name_split = name.split(".")
-
-        if len(_name_split) != 2:
-            raise Exception()  # TODO new exception
-
-        section_name, handler_name = _name_split
-        section = self.app.sections.get(section_name, None)
-
-        if not section:
-            raise Exception()  # TODO ne exception
-
-        route = section.get_route_by_name(handler_name)
-
-        return route.url(**kwargs)
 
     @classmethod
     def routes(cls) -> List[Route]:
@@ -169,7 +148,7 @@ class Routing:
 
         return routes
 
-    async def handler(self, route, controller):
+    async def handler(self, route: 'Route', controller):
         """
         let controller run through the middlewares of routing
         :param route: which route is this request
@@ -189,7 +168,7 @@ class Router:
         self.__routes: List[Tuple[Type[RoutingType], 'Route']] = []
 
     @lru_cache(maxsize=2**5)
-    def match(self, method: str, url: str) -> Optional[Tuple[Type[RoutingType], Route]]:
+    def match(self, method: str, url: str) -> Optional[Tuple[Type[RoutingType], Route, dict]]:
         """
         The Routes are divided into two types: Static Route and Dynamic Route
         For Static Route, it matches provided that the url is equal to the pattern
@@ -204,8 +183,9 @@ class Router:
         :return:
         """
         for routing, route in self.__routes:
-            if route.match(method, url):
-                return routing, route
+            is_match, url_dict = route.match(method, url)
+            if is_match:
+                return routing, route, url_dict
 
         raise RouteNoMatchException()
 

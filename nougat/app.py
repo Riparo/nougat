@@ -72,7 +72,8 @@ class Nougat(object):
         try:
 
             # match the Routing and Route from Router
-            routing_class, route = self.router.match(request.method, request.url.path)
+            routing_class, route, url_dict = self.router.match(request.method, request.url.path)
+            request.url_dict = url_dict
             routing = routing_class(self, request, response, route)
 
             # Guarder Processes
@@ -105,6 +106,10 @@ class Nougat(object):
             response.status = 404
             response.type = 'text/plain'
             response.res = None
+
+        except HttpException as e:
+            response.status = e.status
+            response.res = e.body
 
         return response
 
