@@ -22,19 +22,21 @@ class TestClient:
         self.app = app
         self.loop = asyncio.new_event_loop()
         self.server = None
+        self.port = None
 
     async def stop_server(self):
         loop = asyncio.get_event_loop()
         loop.stop()
 
-    def __request(self, method, url, *args, **kwargs):
+    def __request(self, method, url, cookies=None, *args, **kwargs):
 
         async def __local_request(app, method, url, *args, **kwargs):
 
             server_loop = await app.start_server(HOST, PORT)
-            port = server_loop.sockets[0].getsockname()[1]
-            url = 'http://{host}:{port}{uri}'.format(host=HOST, port=port, uri=url)
-            async with aiohttp.ClientSession(loop=self.loop) as session:
+            self.port = server_loop.sockets[0].getsockname()[1]
+            url = 'http://{host}:{port}{uri}'.format(host=HOST, port=self.port, uri=url)
+
+            async with aiohttp.ClientSession(loop=self.loop, cookies=cookies) as session:
                 async with getattr(session, method)(url, *args, **kwargs) as response:
                     response.text = await response.text()
                     server_loop.close()
@@ -78,4 +80,4 @@ class TestClient:
         generate the abstract url for test case
         """
 
-        return URL('http://{}:{}{}'.format(HOST, PORT, path))
+        return URL('http://{}:{}{}'.format(HOST, self.port, path))
