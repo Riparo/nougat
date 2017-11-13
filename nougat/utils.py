@@ -24,18 +24,6 @@ def is_middleware(func):
         raise UnknownMiddlewareException("the second param's name of middleware {} should be next".format(func.__name__))
 
 
-def is_env_format(match, dict):
-    """
-    test whether it conform the standard
-    :return: Boolean
-    """
-    if not match.group('name').isupper():
-        raise ConfigException("<name>'{}' is not capitalized.".format(match.group('name')))
-
-    if not match.group('type') in dict:
-        raise ConfigException("<type>'{}' is out of list {}".format(match.group('type'), dict.keys()))
-
-
 def response_format(content):
     """
     format different type contents as str
