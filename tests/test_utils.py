@@ -1,5 +1,4 @@
 import pytest
-import json
 from nougat.utils import *
 
 

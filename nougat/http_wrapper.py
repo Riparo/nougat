@@ -104,13 +104,13 @@ class HTTPWrapper(object):
             print('%s %15s   %12s %14sms   [%s]\t%s' % (
                 start_time.strftime('%Y/%m/%d %I:%M:%S'),
                 ConsoleColor.yellow(method.upper()),
-                ConsoleColor.blue(response_status) if 199 < response_status <= 400 else ConsoleColor.red(response_status),
+                ConsoleColor.blue(str(response_status)) if 199 < response_status <= 400 else ConsoleColor.red(str(response_status)),
                 ConsoleColor.green(str(handle_time)),
                 self.__address[0],
                 ConsoleColor.bold(target)
             ))
 
-    async def request_parameters_generator(self, request):
+    async def request_parameters_generator(self, request) -> Tuple[str, str, List[Tuple[str, str]], bytes]:
         """
         load the information from request event
         :param request:
@@ -132,7 +132,7 @@ class HTTPWrapper(object):
 
         return method, target, headers, body
 
-    async def echo_response(self, response: 'Response'):
+    async def echo_response(self, response: 'Response') -> int:
         """
         output the message of Response to client
         :param response: The Response instance coming from Nougat

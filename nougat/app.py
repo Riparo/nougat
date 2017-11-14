@@ -8,8 +8,6 @@ from typing import List, Tuple, TypeVar, Type, Set, Union, Callable
 from nougat.context import Request, Response
 from nougat.routing import Routing, Route, Router
 
-from nougat.guarder import GuarderManager
-
 from nougat.http_wrapper import HTTPWrapper
 import asyncio
 
@@ -29,8 +27,6 @@ class Nougat(object):
 
         self.sections = {}
 
-        self.guarder = GuarderManager()  # Guarder Manager
-        self.guarder.guard(self, 'app')
 
         self.debug: bool = False
 
@@ -46,19 +42,6 @@ class Nougat(object):
         is_middleware(middleware)
         middleware = middleware
         self.__middleware_chain.append(middleware)
-
-    def guarders(self, guarders: Union[List[Callable], Callable]):
-        """
-        Register Guarder function
-        :param guarders: The Guarder Function
-        """
-
-        if not isinstance(guarders, list):
-            guarders = [guarders]
-
-        for guarder in guarders:
-            # TODO: check redefinition
-            self.guarder.guard(guarder)
 
     async def handler(self, request: 'Request'):
         """
@@ -76,12 +59,8 @@ class Nougat(object):
             request.url_dict = url_dict
             routing = routing_class(self, request, response, route)
 
-            # Guarder Processes
-            with self.guarder.guard_context(routing):
-                controller = await self.guarder.generator(route.controller)
-
             # Handling Middleware
-            handler = partial(controller, routing)
+            handler = partial(route.controller, routing)
 
             # save the return value to response.res
             handler = partial(controller_result_to_response, context=routing, next=handler)  # save the result to response res
