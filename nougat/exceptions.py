@@ -115,3 +115,10 @@ class ParamComingFromUnknownLocation(Exception):
 
     def __str__(self):
         return "Parameter {} could not be loaded from localtion {}".format(self.name, self.unexpected_location)
+
+
+class ParamCouldNotBeFormattedToTargetType(Exception):
+
+    def __init__(self, target_type: str, info: str=None):
+        self.target_type = target_type
+        self.info = info or ''

@@ -156,7 +156,7 @@ class Routing:
         :return:
         """
 
-        return controller
+        await controller()
 
 
 RoutingType = TypeVar('RoutingType', bound=Routing)

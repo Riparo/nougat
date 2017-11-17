@@ -1,7 +1,17 @@
-from typing import Callable, Any, List
+from typing import Callable, Any, List, Tuple, Dict, Any
 from nougat.routing import Route, Routing
 from nougat.parameter import Param, ParameterGroup
-from nougat.utils import cached_property
+from nougat.exceptions import ParamCouldNotBeFormattedToTargetType
+from nougat.utils import response_format
+
+
+LOCATION_MAP = {
+    'url': lambda request, key: request.url_dict.get(key, None),
+    'query': lambda request, key: request.url.query.get(key, None),
+    'form': lambda request, key: request.form.get(key, None),
+    'header': lambda request, key: request.headers.get(key, None),
+    'cookie': lambda request, key: request.cookies.get(key, None)
+}
 
 
 class ParamDict(dict):
@@ -57,40 +67,73 @@ class ResourceRouting(Routing):
         super().__init__(app, request, response, route)
 
         self.params = ParamDict()
-        self.__params_generator()
-        
 
     def abort(self, code: int, message: str = None) -> None:
         pass
 
-    def __params_generator(self):
+    def __params_generator(self) -> Tuple[bool, Dict[str, str]]:
         """
         format the params for resource
         """
-        print(self._route.params)
+        _parameters: Dict[str, Any] = {}
+        error_dict: Dict[str, str] = {}
         for name, param_info in self._route.params.items():
 
             param_name = param_info.action or name
 
-            ret = [] if param_info.append else None
-            #
-            # if is_dynamic and param_info.name in route.url_params_dict:
-            #     self.params.__setattr__(param_name, route.url_params_dict[param_info.name])
-            #     continue
-            #
-            # for location in param_info.location:
-            #     location_value = self.__get_msg(location, param_info.name, param_info.append)
-            #     if param_info.append:
-            #         ret.extend(location_value)
-            #     else:
-            #         if not ret:
-            #             ret = location_value
-            #         else:
-            #             break
-            #
-            # if not ret and param_info.optional:
-            #     ret = param_info.default
-            #
-            # self.params.__set_param__(param_name, ret, param_info.type)
+            ret = []
 
-            self.params.__setattr__(param_name, ret)
+            # load
+            for location in param_info.location:
+                value_on_location = LOCATION_MAP.get(location)(self.request, name)
+                if value_on_location:
+                    if param_info.append:
+                        if isinstance(value_on_location, list):
+                            ret.extend(value_on_location)
+                        else:
+                            ret.append(value_on_location)
+                    else:
+                        if isinstance(value_on_location, list):
+                            ret.append(value_on_location[0])
+                        else:
+                            ret.append(value_on_location)
+
+            # set default value if optional is True and ret is empty
+            if not ret and param_info.optional:
+                ret = [param_info.default]
+
+            if not param_info.append:
+                ret = [ret[0]]
+
+            # verify the type of parameter
+            try:
+
+                ret = list(map(param_info.type, ret))
+
+            except ParamCouldNotBeFormattedToTargetType as e:
+                error_dict[name] = e.info
+
+            _parameters[param_name] = (ret if param_info.append else ret[0])
+
+        if not error_dict:
+
+            for key, value in _parameters.items():
+                self.params.__setattr__(key, value)
+
+            return True, error_dict
+        return False, error_dict
+
+    async def handler(self, route: 'Route', controller):
+
+        # format restful parameters
+
+        is_pass, error_dict = self.__params_generator()
+
+        if not is_pass:
+            response_type, result = response_format(error_dict)
+            self.response.status = 400
+            self.response.type = response_type
+            self.response.res = result
+
+        else:
+            await controller()

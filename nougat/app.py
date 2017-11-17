@@ -66,7 +66,7 @@ class Nougat(object):
             handler = partial(controller_result_to_response, context=routing, next=handler)  # save the result to response res
 
             # Routing Time
-            handler = await routing.handler(route, handler)
+            handler = partial(routing.handler, route=route, controller=handler)
 
             # Global Middleware
             chain_reverse = self.__middleware_chain[::-1]
