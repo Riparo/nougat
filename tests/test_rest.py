@@ -1,11 +1,13 @@
+import json
 import pytest
-from nougat import Nougat, get, TestClient
-from nougat.rest import ResourceRouting, param
+from nougat import Nougat, get, post, TestClient
+from nougat.rest import ResourceRouting, param, ParameterGroup, Param, params
+from nougat.exceptions import ParamNeedDefaultValueIfItsOptional
 
 
 class TestRestfulExtension:
 
-    def test_parameter(self, app):
+    def test_basis_parameter(self, app):
 
         class MainRouting(ResourceRouting):
 
@@ -18,3 +20,210 @@ class TestRestfulExtension:
 
         res = TestClient(app).get('/?name=world')
         assert res.text == 'hello world'
+
+        res = TestClient(app).get('/')
+        assert res.text == json.dumps({'name': 'miss parameter'})
+
+    def test_location(self, app):
+        class MainRouting(ResourceRouting):
+
+            @get('/url/:id')
+            @param('id', int, location='url')
+            async def url_param(self):
+                return str(self.params.id)
+
+            @get('/query')
+            @param('name', str, location='query')
+            async def query_param(self):
+                return self.params.name
+
+            @post('/post')
+            @param('name', str, location='form')
+            async def form_param(self):
+                return self.params.name
+
+            @get('/header')
+            @param('name', str, location='header')
+            async def header_param(self):
+                return self.params.name
+
+            @get('/cookies')
+            @param('name', str, location='cookie')
+            async def cookies_param(self):
+                return self.params.name
+
+        app.route(MainRouting)
+
+        # url parameter
+        res = TestClient(app).get('/url/1')
+        assert res.text == '1'
+
+        res = TestClient(app).get('/url/word')
+        assert res.status == 400
+        assert res.text == json.dumps({'id': 'cannot be converted to int'})
+
+        # query parameter
+        res = TestClient(app).get('/query?name=foo')
+        assert res.text == 'foo'
+
+        res = TestClient(app).get('/query')
+        assert res.status == 400
+        assert res.text == json.dumps({'name': 'miss parameter'})
+
+        # form parameter
+        res = TestClient(app).post('/post', data={'name': 'bar'})
+        assert res.text == 'bar'
+
+        res = TestClient(app).post('/post')
+        assert res.status == 400
+        assert res.text == json.dumps({'name': 'miss parameter'})
+
+        # header parameter
+        res = TestClient(app).get('/header', headers={'name': 'bars'})
+        assert res.text == 'bars'
+
+        res = TestClient(app).get('/header')
+        assert res.status == 400
+        assert res.text == json.dumps({'name': 'miss parameter'})
+
+        # cookies parameter
+        res = TestClient(app).get('/cookies', cookies={'name': 'bars'})
+        assert res.text == 'bars'
+
+        res = TestClient(app).get('/cookies')
+        assert res.status == 400
+        assert res.text == json.dumps({'name': 'miss parameter'})
+
+    def test_multiple_location(self, app):
+
+        class MainRouting(ResourceRouting):
+
+            @post('/')
+            @param('name', str, location=['query', 'form', 'header', 'cookie'])
+            async def multiple_location(self):
+                return self.params.name
+
+        app.route(MainRouting)
+
+        res = TestClient(app).post('/?name=foo')
+        assert res.text == 'foo'
+
+        res = TestClient(app).post('/', headers={'name': 'bar'})
+        assert res.text == 'bar'
+
+        res = TestClient(app).post('/', data={'name': 'foo'}, headers={'name': 'bar'})
+        assert res.text == 'foo'
+
+        res = TestClient(app).post('/')
+        assert res.text == json.dumps({'name': 'miss parameter'})
+
+    def test_optional_param_without_default(self, app):
+        with pytest.raises(ParamNeedDefaultValueIfItsOptional):
+            class MainRouting(ResourceRouting):
+                @get('/')
+                @param('name', str, optional=True)
+                async def without_default(self):
+                    return self.params.name
+
+            app.route(MainRouting)
+
+    def test_default_value(self, app):
+
+        class MainRouting(ResourceRouting):
+            @get('/')
+            @param('name', str, optional=True, default='foo')
+            async def multiple_location(self):
+                return self.params.name
+
+        app.route(MainRouting)
+
+        res = TestClient(app).get('/?name=bar')
+        assert res.text == 'bar'
+
+        res = TestClient(app).get('/')
+        assert res.text == 'foo'
+
+    def test_warning(self, app):
+
+        class MainRouting(ResourceRouting):
+            @get('/')
+            @param('name', str, warning='hello')
+            async def multiple_location(self):
+                return self.params.name
+
+        app.route(MainRouting)
+
+        res = TestClient(app).get('/?name=bar')
+        assert res.text == 'bar'
+
+        res = TestClient(app).get('/')
+        assert res.text == json.dumps({'name': 'hello'})
+
+    def test_action(self, app):
+
+        class MainRouting(ResourceRouting):
+
+            @get('/')
+            @param('name', str, action='user')
+            async def action(self):
+                return self.params.user
+
+        app.route(MainRouting)
+
+        res = TestClient(app).get('/?name=123')
+        assert res.text == '123'
+
+    def test_append(self, app):
+
+        class MainRouting(ResourceRouting):
+            @get('/')
+            @param('name', str, append=True)
+            async def action(self):
+                return self.params.name
+
+        app.route(MainRouting)
+
+        res = TestClient(app).get('/', params={'name': 'hello'})
+        assert res.text == json.dumps(['hello'])
+
+    def test_description(self, app):
+
+        class MainRouting(ResourceRouting):
+            @get('/')
+            @param('name', str, description='the name of user')
+            async def action(self):
+                return self.params.name
+
+        app.route(MainRouting)
+
+        res = TestClient(app).get('/', params={'name': 'hello'})
+        assert res.text == 'hello'
+
+    def test_parameter_group(self, app):
+
+        class Pagination(ParameterGroup):
+            now = Param('now', int, optional=True, default=1)
+            size = Param('size', int, optional=True, default=10)
+
+        class MainRouting(ResourceRouting):
+
+            @get('/list')
+            @params(Pagination)
+            async def show_list(self):
+                return '{} {}'.format(self.params.now, self.params.size)
+
+
+        app.route(MainRouting)
+
+        res = TestClient(app).get('/list')
+        assert res.text == '1 10'
+
+        res = TestClient(app).get('/list', params={'now': 3})
+        assert res.text == '3 10'
+
+        res = TestClient(app).get('/list', params={'size': 5})
+        assert res.text == '1 5'
+
+        res = TestClient(app).get('/list', params={'now': 5, 'size': 15})
+        assert res.text == '5 15'
+
