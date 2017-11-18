@@ -30,7 +30,8 @@ def param(name: str,
           default: Any = None,
           action=None,
           append=False,
-          description: str = None
+          description: str = None,
+          warning: str = None
           ) -> Callable:
 
     def decorator(controller: (Callable, 'Route')) -> 'Route':
@@ -38,7 +39,7 @@ def param(name: str,
         if not isinstance(controller, Route):
             controller = Route('', '', controller)
 
-        controller.add_param(name, type,  location, optional, default, action, append, description)
+        controller.add_param(name, type,  location, optional, default, action, append, description, warning)
 
         return controller
 
@@ -98,9 +99,14 @@ class ResourceRouting(Routing):
                         else:
                             ret.append(value_on_location)
 
+            print(name, ret)
             # set default value if optional is True and ret is empty
-            if not ret and param_info.optional:
-                ret = [param_info.default]
+            if not ret:
+                if param_info.optional:
+                    ret = [param_info.default]
+                else:
+                    error_dict[name] = param_info.warning or 'miss parameter'
+                    continue
 
             if not param_info.append:
                 ret = [ret[0]]
@@ -112,6 +118,9 @@ class ResourceRouting(Routing):
 
             except ParamCouldNotBeFormattedToTargetType as e:
                 error_dict[name] = e.info
+
+            except ValueError:
+                error_dict[name] = 'cannot be converted to {}'.format(param_info.type.__name__)
 
             _parameters[param_name] = (ret if param_info.append else ret[0])
 
@@ -137,3 +146,7 @@ class ResourceRouting(Routing):
 
         else:
             await controller()
+            response_type, result = response_format(self.response.res)
+            self.response.type = response_type
+            self.response.res = result
+

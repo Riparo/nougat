@@ -107,6 +107,10 @@ class GuarderDoesNotPass(Exception):
     pass
 
 
+class ParamNeedDefaultValueIfItsOptional(Exception):
+    pass
+
+
 class ParamComingFromUnknownLocation(Exception):
 
     def __init__(self, name, unexpected_location):

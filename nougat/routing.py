@@ -69,13 +69,14 @@ class Route:
                   default: Any = None,
                   action=None,
                   append=False,
-                  description: str = None
+                  description: str = None,
+                  warning: str = None
                   ) -> None:
 
         if name in self.params:
             raise ParamRedefineException(" / ".join(self.route[1]), name)
 
-        self.params[name] = Param(name, type, location, optional, default, action, append, description)
+        self.params[name] = Param(name, type, location, optional, default, action, append, description, warning)
 
     def __route_pattern_generator(self):
         if self.__route:

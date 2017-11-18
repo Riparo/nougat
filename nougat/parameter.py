@@ -1,5 +1,5 @@
 from typing import Callable, Any, List
-from nougat.exceptions import ParamComingFromUnknownLocation
+from nougat.exceptions import ParamComingFromUnknownLocation, ParamNeedDefaultValueIfItsOptional
 
 
 class Param:
@@ -9,12 +9,13 @@ class Param:
     def __init__(self,
                  name: str,
                  type: Callable[[str], Any],
-                 location: (str, List[str]) = None,
+                 location: (str, List[str]) = 'query',
                  optional: bool =False,
                  default: Any =None,
                  action: str = None,
                  append: bool = False,
-                 description: str = None):
+                 description: str = None,
+                 warning: str = None):
 
         self.name = name
         self.type = type  # type or [type, type]
@@ -24,8 +25,9 @@ class Param:
         self.action = action  # rename
         self.append = append  # list or not
         self.description = description  # description
+        self.warning = warning
         if self.optional and not self.default:
-            raise ValueError("if you set param optional, then type its default value")
+            raise ParamNeedDefaultValueIfItsOptional()
 
         # location iterable
         if not isinstance(self.location, list):
