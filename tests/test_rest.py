@@ -212,7 +212,6 @@ class TestRestfulExtension:
             async def show_list(self):
                 return '{} {}'.format(self.params.now, self.params.size)
 
-
         app.route(MainRouting)
 
         res = TestClient(app).get('/list')
@@ -227,3 +226,17 @@ class TestRestfulExtension:
         res = TestClient(app).get('/list', params={'now': 5, 'size': 15})
         assert res.text == '5 15'
 
+    def test_multiple_parameters(self, app):
+
+        class MainRouting(ResourceRouting):
+
+            @get('/')
+            @param('first_name', str)
+            @param('last_name', str)
+            async def hello(self):
+                return f"hello {self.params.first_name} {self.params.last_name}"
+
+        app.route(MainRouting)
+
+        res = TestClient(app).get('/', params={'first_name': 'foo', 'last_name': 'bar'})
+        assert res.text == 'hello foo bar'
