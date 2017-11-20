@@ -133,20 +133,6 @@ class cached_property(object):
         return value
 
 
-def get_all_parameters(func):
-
-    args = list(inspect.signature(func).parameters.items())
-
-    return [arg[0] for arg in args]
-
-
-async def call(func):
-    if not inspect.iscoroutinefunction(func):
-        return func()
-
-    return await func()
-
-
 async def controller_result_to_response(context, next):
     result = await next()
     context.response.res = result
