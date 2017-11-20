@@ -5,4 +5,4 @@ from nougat.http_wrapper import *
 from nougat.test_client import *
 from nougat.routing import Routing, get, post, put, delete, patch
 
-__version__ = "0.2.0"
+__version__ = "0.2.1"

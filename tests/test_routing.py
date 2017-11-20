@@ -127,7 +127,7 @@ class TestGetRoutingInformation:
         app.route(MainRouting)
 
         res = TestClient(app).get('/')
-        assert res.text == 'OK'
+        assert res.text == ''
 
         res = TestClient(app).get('/?hello=world')
         assert res.text == 'world'
@@ -144,7 +144,7 @@ class TestGetRoutingInformation:
         app.route(MainRouting)
 
         res = TestClient(app).post('/')
-        assert res.text == 'OK'
+        assert res.text == ''
 
         res = TestClient(app).post('/', data={'hello': 'world'})
         assert res.text == 'world'
@@ -201,7 +201,7 @@ class TestGetRoutingInformation:
         app.route(MainRouting)
 
         res = TestClient(app).post('/')
-        assert res.text == 'OK'
+        assert res.text == ''
 
         res = TestClient(app).post('/', json={'hello': 'world'})
         assert res.text == 'world'
