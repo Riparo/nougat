@@ -164,11 +164,11 @@ class TestRouter:
         data = FormData()
         data.add_field('name', 'foo')
         data.add_field('file', 'file content',
-                       filename='avatar.webp',
-                       content_type='image/webp')
+                       filename='file.file',
+                       content_type='image/img')
 
         res = TestClient(app).post('/', data=data)
-        assert res.text == 'avatar.webp'
+        assert res.text == 'file.file'
 
 
 class TestMiddleware:
