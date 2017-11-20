@@ -74,7 +74,10 @@ class Route:
                   ) -> None:
 
         if name in self.params:
-            raise ParamRedefineException(" / ".join(self.route[1]), name)
+            raise ParamRedefineException(
+                " / ".join(["{} {}".format(method, target) for method, target in list(self.__route)]),
+                name
+            )
 
         self.params[name] = Param(name, type, location, optional, default, action, append, description, warning)
 

@@ -32,7 +32,7 @@ class Param:
         # location iterable
         if not isinstance(self.location, list):
             self.location = [self.location]
-        unexpected_location = set(self.location) - set(Param.ALL_LOCATION)
+        unexpected_location = list(set(self.location) - set(Param.ALL_LOCATION))
         if unexpected_location:
             raise ParamComingFromUnknownLocation(self.name, unexpected_location)
 

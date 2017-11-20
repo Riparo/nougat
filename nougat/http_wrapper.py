@@ -120,7 +120,7 @@ class HTTPWrapper(object):
         target: str = request.target.decode("ascii")
         headers: List[Tuple[str, str]] = [(name.decode("ascii"), value.decode("ascii"))
                                           for (name, value) in request.headers]
-        body = ""
+        body = b''
         while True:
             request = await self.next_event()
             if type(request) is h11.EndOfMessage:
@@ -128,7 +128,7 @@ class HTTPWrapper(object):
 
             if type(request) is not h11.Data:
                 continue
-            body += request.data.decode("ascii")
+            body += request.data
 
         return method, target, headers, body
 
