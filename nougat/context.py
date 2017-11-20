@@ -45,7 +45,7 @@ class Request:
 
     @cached_property
     def ip(self):
-        if self.app.config.get("X-FORWARD-IP", False):
+        if self.app.config.get("X_FORWARD_IP", False):
             return self.headers.get("X-Forwarded-For", "").strip().split(",")
         else:
             return self.__original_ip
@@ -132,7 +132,7 @@ class Response:
         :return:
         """
 
-        self.__body = self.res or STATUS_CODES.get(self.status, 'FAIL')
+        self.__body = self.res or ''
 
         self.set_header('Content-Type', "{};charset=".format(self.type, self.charset))
         self.set_header('Content-Length', '{}'.format(len(self.__body)))
