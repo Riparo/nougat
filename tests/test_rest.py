@@ -1,8 +1,8 @@
 import json
 import pytest
-from nougat import Nougat, get, post, TestClient
+from nougat import get, post, TestClient
 from nougat.rest import ResourceRouting, param, ParameterGroup, Param, params
-from nougat.exceptions import ParamNeedDefaultValueIfItsOptional
+from nougat.exceptions import ParamNeedDefaultValueIfItsOptional, ParamRedefineException, ParamComingFromUnknownLocation, ParamCouldNotBeFormattedToTargetType
 
 
 class TestRestfulExtension:
@@ -240,3 +240,27 @@ class TestRestfulExtension:
 
         res = TestClient(app).get('/', params={'first_name': 'foo', 'last_name': 'bar'})
         assert res.text == 'hello foo bar'
+
+    def test_parameter_redefine(self, app):
+        with pytest.raises(ParamRedefineException):
+
+            class MainRouting(ResourceRouting):
+
+                @get('/')
+                @param('name', str)
+                @param('name', str)
+                async def redefine(self):
+                    return 'fine'
+
+            app.route(MainRouting)
+
+    def test_param_come_from_unknown_location(self, app):
+        with pytest.raises(ParamComingFromUnknownLocation):
+            class MainRouting(ResourceRouting):
+
+                @get('/')
+                @param('name', str, location='aaa')
+                async def unknown(self):
+                    return 'fine'
+
+            app.route(MainRouting)

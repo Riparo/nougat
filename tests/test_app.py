@@ -1,6 +1,7 @@
 from nougat import Nougat
 from nougat.routing import Routing, get, post, put, patch ,delete
 from nougat.test_client import TestClient
+from aiohttp import FormData
 
 
 class TestBasicApplication:
@@ -148,6 +149,26 @@ class TestRouter:
 
         res = TestClient(app).get('/article/path/123')
         assert res.text == 'Not Found'
+
+    def test_form_data_with_multipart(self, app):
+
+        class MainRouting(Routing):
+
+            @post('/')
+            async def multipart(self):
+                name = self.request.form.get('file')
+                return name.name
+
+        app.route(MainRouting)
+
+        data = FormData()
+        data.add_field('name', 'foo')
+        data.add_field('file', 'file content',
+                       filename='avatar.webp',
+                       content_type='image/webp')
+
+        res = TestClient(app).post('/', data=data)
+        assert res.text == 'avatar.webp'
 
 
 class TestMiddleware:

@@ -94,6 +94,26 @@ class TestAddCustomResponse:
         assert res.content_type == 'application/json'
         assert res.text == '[]'
 
+    def test_set_advanced_cookie(self, app):
+        class MainRouting(Routing):
+            @get('/')
+            async def index(self):
+                self.response.set_cookies(
+                    'Coo', 'Content',
+                    expires=10,
+                    domain='127.0.0.1',
+                    path='/',
+                    secure=True,
+                    http_only=True,
+                    same_site='127.0.0.1:8000'
+                )
+
+        app.route(MainRouting)
+
+        res = TestClient(app).get('/')
+        assert res.cookies.get('Coo', None).value == 'Content'
+
+
 
 class TestGetRoutingInformation:
 
@@ -155,3 +175,33 @@ class TestGetRoutingInformation:
         res = TestClient(app).get('/', cookies={'custom-cookie': 'hello world', 'append': 'more'})
 
         assert res.text == '"hello world"'
+
+    def test_get_ip(self, app):
+
+        class MainRouting(Routing):
+            @get('/')
+            async def index(self):
+                return self.request.ip
+
+        app.route(MainRouting)
+
+        res = TestClient(app).get('/')
+        assert res.text == '127.0.0.1'
+
+    def test_json(self, app):
+
+        class MainRouting(Routing):
+            @post('/')
+            async def index(self):
+                print(self.request.form)
+                hello = self.request.form.get('hello', None)
+                if hello:
+                    return hello
+
+        app.route(MainRouting)
+
+        res = TestClient(app).post('/')
+        assert res.text == 'OK'
+
+        res = TestClient(app).post('/', json={'hello': 'world'})
+        assert res.text == 'world'

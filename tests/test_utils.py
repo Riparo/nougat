@@ -55,3 +55,15 @@ def test_format_dict():
 
 def test_format_int():
     assert "str", "123" == response_format(123)
+
+
+def test_terminal_color_text():
+
+    assert ConsoleColor.blue('123') == '\033[94m123\033[0m'
+    assert ConsoleColor.purple('123') == '\033[95m123\033[0m'
+    assert ConsoleColor.green('123') == '\033[92m123\033[0m'
+    assert ConsoleColor.yellow('123') == '\033[93m123\033[0m'
+    assert ConsoleColor.red('123') == '\033[91m123\033[0m'
+    assert ConsoleColor.bold('123') == '\033[1m123\033[0m'
+
+    assert ConsoleColor.blue('123', bold=True, underline=True) == '\033[4m\033[1m\033[94m123\033[0m\033[0m\033[0m'
