@@ -5,9 +5,7 @@ from nougat.test_client import TestClient
 
 class TestBasicApplication:
 
-    def test_get(self):
-
-        app = Nougat()
+    def test_get(self, app):
 
         class Basic(Routing):
 
@@ -20,8 +18,7 @@ class TestBasicApplication:
         res = TestClient(app).get('/')
         assert res.text == 'hello world'
 
-    def test_post(self):
-        app = Nougat()
+    def test_post(self, app):
 
         class Basic(Routing):
             @post('/')
@@ -33,8 +30,7 @@ class TestBasicApplication:
         res = TestClient(app).post('/')
         assert res.text == 'post method'
 
-    def test_put(self):
-        app = Nougat()
+    def test_put(self, app):
 
         class Basic(Routing):
             @put('/')
@@ -46,8 +42,7 @@ class TestBasicApplication:
         res = TestClient(app).put('/')
         assert res.text == 'put method'
 
-    def test_patch(self):
-        app = Nougat()
+    def test_patch(self, app):
 
         class Basic(Routing):
             @patch('/')
@@ -59,8 +54,7 @@ class TestBasicApplication:
         res = TestClient(app).patch('/')
         assert res.text == 'patch method'
 
-    def test_delete(self):
-        app = Nougat()
+    def test_delete(self, app):
 
         class Basic(Routing):
             @delete('/')
@@ -75,9 +69,7 @@ class TestBasicApplication:
 
 class TestRouter:
 
-    def test_static(self):
-
-        app = Nougat()
+    def test_static(self, app):
 
         class MainRouting(Routing):
 
@@ -93,9 +85,7 @@ class TestRouter:
         res = TestClient(app).get('/')
         assert res.text == 'Not Found'
 
-    def test_simple_type(self):
-
-        app = Nougat()
+    def test_simple_type(self, app):
 
         class MainRouting(Routing):
 
@@ -117,8 +107,7 @@ class TestRouter:
         res = TestClient(app).get('/article/path/123')
         assert res.text == 'Not Found'
 
-    def test_unnamed_regex(self):
-        app = Nougat()
+    def test_unnamed_regex(self, app):
 
         class MainRouting(Routing):
             @get('/article/[0-9]+')
@@ -139,8 +128,7 @@ class TestRouter:
         res = TestClient(app).get('/article/path/123')
         assert res.text == 'Not Found'
 
-    def test_named_regex(self):
-        app = Nougat()
+    def test_named_regex(self, app):
 
         class MainRouting(Routing):
             @get('/article/:id<[0-9]+>')
@@ -164,9 +152,7 @@ class TestRouter:
 
 class TestMiddleware:
 
-    def test_basic(self):
-
-        app = Nougat()
+    def test_basic(self, app):
 
         async def middleware(context, next):
 

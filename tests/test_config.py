@@ -3,9 +3,7 @@ import nougat
 
 class TestConfig:
 
-    def test_load_from_object(self):
-
-        app = nougat.Nougat()
+    def test_load_from_object(self, app):
 
         class BasicConfig:
 
@@ -17,9 +15,7 @@ class TestConfig:
         assert app.config.UPPER_VAR == 'hello'
         assert app.config.lower_var is None
 
-    def test_patch_config(self):
-
-        app = nougat.Nougat()
+    def test_patch_config(self, app):
 
         app.config.HELLO = 'world'
 

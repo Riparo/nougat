@@ -3,9 +3,7 @@ from nougat import Nougat, get, Routing, TestClient, post
 
 class TestRouting:
 
-    def test_redirect(self):
-
-        app = Nougat()
+    def test_redirect(self, app):
 
         class MainRouting(Routing):
 
@@ -27,9 +25,7 @@ class TestRouting:
         assert res.url == test.url('/after')
         assert res.text == 'redirect after'
 
-    def test_abort(self):
-
-        app = Nougat()
+    def test_abort(self, app):
 
         class MainRouting(Routing):
 
@@ -46,9 +42,7 @@ class TestRouting:
 
 class TestAddCustomResponse:
 
-    def test_add_header(self):
-
-        app = Nougat()
+    def test_add_header(self, app):
 
         class MainRouting(Routing):
 
@@ -61,9 +55,7 @@ class TestAddCustomResponse:
         res = TestClient(app).get('/')
         assert res.headers.get('Keyword', None) == 'Value'
 
-    def test_add_cookies(self):
-
-        app = Nougat()
+    def test_add_cookies(self, app):
 
         class MainRouting(Routing):
             @get('/')
@@ -75,9 +67,7 @@ class TestAddCustomResponse:
         res = TestClient(app).get('/')
         assert res.cookies.get('Coo', None).value == 'Content'
 
-    def test_custom_http_code(self):
-
-        app = Nougat()
+    def test_custom_http_code(self, app):
 
         class MainRouting(Routing):
 
@@ -90,8 +80,7 @@ class TestAddCustomResponse:
         res = TestClient(app).get('/')
         assert res.status == 400
 
-    def test_custom_response_type(self):
-        app = Nougat()
+    def test_custom_response_type(self, app):
 
         class MainRouting(Routing):
             @get('/')
@@ -108,9 +97,7 @@ class TestAddCustomResponse:
 
 class TestGetRoutingInformation:
 
-    def test_get_from_query(self):
-
-        app = Nougat()
+    def test_get_from_query(self, app):
 
         class MainRouting(Routing):
             @get('/')
@@ -125,9 +112,7 @@ class TestGetRoutingInformation:
         res = TestClient(app).get('/?hello=world')
         assert res.text == 'world'
 
-    def test_get_from_form(self):
-
-        app = Nougat()
+    def test_get_from_form(self, app):
 
         class MainRouting(Routing):
             @post('/')
@@ -144,9 +129,7 @@ class TestGetRoutingInformation:
         res = TestClient(app).post('/', data={'hello': 'world'})
         assert res.text == 'world'
 
-    def test_get_from_header(self):
-
-        app = Nougat()
+    def test_get_from_header(self, app):
 
         class MainRouting(Routing):
 
@@ -160,9 +143,7 @@ class TestGetRoutingInformation:
 
         assert res.text == 'hello world'
 
-    def test_get_from_cookie(self):
-
-        app = Nougat()
+    def test_get_from_cookie(self, app):
 
         class MainRouting(Routing):
             @get('/')
