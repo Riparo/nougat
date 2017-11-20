@@ -1,21 +1,9 @@
 class HttpException(Exception):
 
-    def __init__(self, body, status):
+    def __init__(self, status, body):
         super().__init__()
         self.body = body
         self.status = status
-
-
-class ConfigException(Exception):
-
-    def __init__(self, err=None):
-        if err:
-            self.err = err
-        else:
-            self.err = 'Config is nonstandard'
-
-    def __str__(self):
-        return "Format : 'ENV::<name>::<type>::<default_value>'\n" + self.err
 
 
 class UnknownMiddlewareException(Exception):
@@ -30,42 +18,8 @@ class UnknownMiddlewareException(Exception):
         return self.err
 
 
-class UnknownSectionException(Exception):
-    pass
-
-
 class RouteNoMatchException(Exception):
     pass
-
-
-class UnknownRouterException(Exception):
-    pass
-
-
-class RouteReDefineException(Exception):
-
-    def __init__(self, method, url):
-        self.method = method
-        self.url = url
-
-    def __str__(self):
-        return "{} {} seems been redefined".format(self.method, self.url)
-
-
-class NougatRuntimeError(Exception):
-
-    def __init__(self, text=""):
-        self.text = text
-
-
-class HandlerRedefineException(Exception):
-
-    def __init__(self, section, handler):
-        self.section = section
-        self.handler = handler
-
-    def __str__(self):
-        return "{} handler seems redefine in section {}".format(self.handler, self.section)
 
 
 class ParamRedefineException(Exception):
@@ -78,30 +32,28 @@ class ParamRedefineException(Exception):
         return "{} seems redefine param named {}".format(self.rule, self.name)
 
 
-class ParamMissingException(Exception):
-
-    def __init__(self, rule: str, name: str) -> None:
-        self.rule = rule
-        self.name = name
-
-    def __str__(self) -> str:
-        return "{} seems miss param named {}".format(self.rule, self.name)
-
-
 class ResponseContentCouldNotFormat(Exception):
 
     def __str__(self):
         return "the content of rescponse could not be formatted as str"
 
 
-class GuarderDoesNotExist(Exception):
+class ParamNeedDefaultValueIfItsOptional(Exception):
+    pass
 
-    def __init__(self, name):
+
+class ParamComingFromUnknownLocation(Exception):
+
+    def __init__(self, name, unexpected_location):
         self.name = name
+        self.unexpected_location = unexpected_location
 
     def __str__(self):
-        return "Guarder < {} > does not exist".format(self.name)
+        return "Parameter {} could not be loaded from localtion {}".format(self.name, self.unexpected_location)
 
 
-class GuarderDoesNotPass(Exception):
-    pass
+class ParamCouldNotBeFormattedToTargetType(Exception):
+
+    def __init__(self, target_type: str, info: str=None):
+        self.target_type = target_type
+        self.info = info or ''

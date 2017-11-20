@@ -1,18 +1,15 @@
 import logging
 from functools import partial
 from nougat.exceptions import *
-from nougat.utils import is_middleware, response_format
+from nougat.utils import is_middleware, controller_result_to_response
 from nougat.config import Config
 
 from typing import List, Tuple, TypeVar, Type, Set, Union, Callable
 from nougat.context import Request, Response
 from nougat.routing import Routing, Route, Router
 
-from nougat.guarder import GuarderManager
-
-import curio
-import signal
 from nougat.http_wrapper import HTTPWrapper
+import asyncio
 
 
 RoutingType = TypeVar('RoutingType', bound=Routing)
@@ -30,8 +27,6 @@ class Nougat(object):
 
         self.sections = {}
 
-        self.guarder = GuarderManager()  # Guarder Manager
-        self.guarder.guard(self, 'app')
 
         self.debug: bool = False
 
@@ -48,19 +43,6 @@ class Nougat(object):
         middleware = middleware
         self.__middleware_chain.append(middleware)
 
-    def guarders(self, guarders: Union[List[Callable], Callable]):
-        """
-        Register Guarder function
-        :param guarders: The Guarder Function
-        """
-
-        if not isinstance(guarders, list):
-            guarders = [guarders]
-
-        for guarder in guarders:
-            # TODO: check redefinition
-            self.guarder.guard(guarder)
-
     async def handler(self, request: 'Request'):
         """
         The handler handling each request
@@ -73,36 +55,40 @@ class Nougat(object):
         try:
 
             # match the Routing and Route from Router
-            routing_class, route = self.router.match(request.method, request.url.path)
-            routing = routing_class(request, response)
-
-            # Guarder Processes
-            with self.guarder.guard_context(routing):
-                controller = await self.guarder.generator(route.controller)
+            routing_class, route, url_dict = self.router.match(request.method, request.url.path)
+            request.url_dict = url_dict
+            routing = routing_class(self, request, response, route)
 
             # Handling Middleware
-            handler = partial(controller, routing)
+            handler = partial(route.controller, routing)
 
+            # save the return value to response.res
+            handler = partial(controller_result_to_response, context=routing, next=handler)  # save the result to response res
+
+            # Routing Time
+            handler = partial(routing.handler, route=route, controller=handler)
+
+            # Global Middleware
             chain_reverse = self.__middleware_chain[::-1]
             for middleware in chain_reverse:
                 handler = partial(middleware, context=routing, next=handler)
 
-            controller_res = await handler()
+            await handler()
 
             # Formatting the Response data
-            res_type, controller_res = response_format(controller_res)
 
         except ResponseContentCouldNotFormat:
-            res_type = 'text/plain'
-            controller_res = "unable to format response"
+            response.type = 'text/plain'
+            response.res = "unable to format response"
 
         except RouteNoMatchException:
             response.status = 404
-            res_type = 'text/plain'
-            controller_res = None
+            response.type = 'text/plain'
+            response.res = None
 
-        response.type = res_type
-        response.res = controller_res
+        except HttpException as e:
+            response.status = e.status
+            response.res = e.body
 
         return response
 
@@ -117,7 +103,12 @@ class Nougat(object):
         if debug:
             print("Nougat is listening on http://{}:{}\n".format(host, port))
         self.debug = debug
-        curio.run(self.start_server, host, port)
+        loop = asyncio.new_event_loop()
+        loop.run_until_complete(self.start_server(host, port))
+        try:
+            loop.run_forever()
+        except KeyboardInterrupt:
+            loop.close()
 
     def doc(self):
         """
@@ -145,17 +136,11 @@ class Nougat(object):
 
     async def start_server(self, host: str, port: int):
 
-        async with curio.SignalQueue(signal.SIGINT, signal.SIGTERM) as sig_queue:
+        return await asyncio.start_server(self.http_serve, host, port)
 
-            server = await curio.spawn(curio.tcp_server, host, port, self.http_serve)
-
-            await sig_queue.get()  # waiting for signal
-
-            print("preparing shutdown server")
-            await server.cancel()
-
-    async def http_serve(self, sock, address):
+    async def http_serve(self, reader, writer):
         """
         the income function of curio.tcp_server
         """
-        await HTTPWrapper(sock, address).process(self)
+        address = writer.get_extra_info('peername')
+        await HTTPWrapper((reader, writer), address).process(self)

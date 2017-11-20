@@ -1,144 +1,196 @@
 from nougat import Nougat
-from nougat.routing import Routing, get
+from nougat.routing import Routing, get, post, put, patch ,delete
 from nougat.test_client import TestClient
+from aiohttp import FormData
 
 
 class TestBasicApplication:
 
-    def test_asyncio(self):
-
-        app = Nougat()
+    def test_get(self, app):
 
         class Basic(Routing):
 
             @get('/')
             async def index(self):
-                return '123'
+                return 'hello world'
 
         app.route(Basic)
 
-        print("start running Test Case")
         res = TestClient(app).get('/')
-        print(res)
+        assert res.text == 'hello world'
+
+    def test_post(self, app):
+
+        class Basic(Routing):
+            @post('/')
+            async def index(self):
+                return 'post method'
+
+        app.route(Basic)
+
+        res = TestClient(app).post('/')
+        assert res.text == 'post method'
+
+    def test_put(self, app):
+
+        class Basic(Routing):
+            @put('/')
+            async def index(self):
+                return 'put method'
+
+        app.route(Basic)
+
+        res = TestClient(app).put('/')
+        assert res.text == 'put method'
+
+    def test_patch(self, app):
+
+        class Basic(Routing):
+            @patch('/')
+            async def index(self):
+                return 'patch method'
+
+        app.route(Basic)
+
+        res = TestClient(app).patch('/')
+        assert res.text == 'patch method'
+
+    def test_delete(self, app):
+
+        class Basic(Routing):
+            @delete('/')
+            async def index(self):
+                return 'delete method'
+
+        app.route(Basic)
+
+        res = TestClient(app).delete('/')
+        assert res.text == 'delete method'
+
+
+class TestRouter:
+
+    def test_static(self, app):
+
+        class MainRouting(Routing):
+
+            @get('/static')
+            async def static_route(self):
+                return 'static route'
+
+        app.route(MainRouting)
+
+        res = TestClient(app).get('/static')
+        assert res.text == 'static route'
+
+        res = TestClient(app).get('/')
+        assert res.status == 404
+
+    def test_simple_type(self, app):
+
+        class MainRouting(Routing):
+
+            @get('/article/:id')
+            async def article_simple(self):
+                return 'id: {}'.format(self.request.url_dict.get('id'))
+
+        app.route(MainRouting)
+
+        res = TestClient(app).get('/article/')
+        assert res.status == 404
+        assert res.text == ''
+
+        res = TestClient(app).get('/article/123')
+        assert res.text == 'id: 123'
+
+        res = TestClient(app).get('/article/word')
+        assert res.text == 'id: word'
+
+        res = TestClient(app).get('/article/path/123')
+        assert res.text == ''
+
+    def test_unnamed_regex(self, app):
+
+        class MainRouting(Routing):
+            @get('/article/[0-9]+')
+            async def article_simple(self):
+                return 'hit'
+
+        app.route(MainRouting)
+
+        res = TestClient(app).get('/article/')
+        assert res.text == ''
+
+        res = TestClient(app).get('/article/123')
+        assert res.text == 'hit'
+
+        res = TestClient(app).get('/article/word')
+        assert res.text == ''
+
+        res = TestClient(app).get('/article/path/123')
+        assert res.text == ''
+
+    def test_named_regex(self, app):
+
+        class MainRouting(Routing):
+            @get('/article/:id<[0-9]+>')
+            async def article_simple(self):
+                return self.request.url_dict.get('id', 'None')
+
+        app.route(MainRouting)
+
+        res = TestClient(app).get('/article/')
+        assert res.text == ''
+
+        res = TestClient(app).get('/article/123')
         assert res.text == '123'
 
-#
-# def test_use_not_section_instance():
-#     with pytest.raises(NougatRuntimeError):
-#         app = Nougat("test")
-#         app.use(Nougat())
-#
-#
-# def test_use_section():
-#     app = Nougat("test")
-#     app.use(Section("test"))
-#     print('有钱人')
-#     assert len(app.sections) == 1
-#
-# def test_get():
-#     app = Nougat()
-#
-#     main = Section("main")
-#
-#     @main.get("/")
-#     async def index(ctx):
-#         return "123"
-#
-#     app.use(main)
-#
-#     res, ctx = app.test.get("/")
-#     assert res.text == "123"
-#
-#
-# def test_post():
-#     app = Nougat()
-#
-#     main = Section("main")
-#
-#     @main.post("/")
-#     async def index(ctx):
-#         return "1234"
-#
-#     app.use(main)
-#
-#     res, ctx = app.test.post("/")
-#     assert res.text == "1234"
-#
-#
-# def test_default_http_status():
-#     app = Nougat()
-#     main = Section("main")
-#
-#     @main.get("/")
-#     async def index(ctx):
-#         return {"hello": "world"}
-#
-#     app.use(main)
-#
-#     res, ctx = app.test.get("/")
-#     assert res.status == 200
-#     assert res.text == json.dumps({"hello": "world"})
-#
-#
-# def test_client_http_status():
-#     app = Nougat()
-#     main = Section("main")
-#
-#     @main.get("/")
-#     async def index(ctx):
-#         return {"hello": "world"}, 401
-#
-#     app.use(main)
-#
-#     res, ctx = app.test.get("/")
-#     assert res.status == 401
-#
-#
-# @pytest.mark.asyncio
-# async def test_asyncio(event_loop):
-#     app = Nougat()
-#
-#     with app.create_server(event_loop):
-#         print(123)
-#
-#     await asyncio.sleep(10)
-#
-#     assert 1 == 2
-#
-# # TODO: what will the test case looks like
-# # @pytest.mask.asyncio
-# # async def test_asyncio(loop_event):
-# #
-# #     app = Nougat()
-# #
-# #     await app.create_server(loop_event)
-# #
-# #     res = await app.get('fff')
-# #
-# #     assert res == 'hello'
-#
-#
-# @pytest.mark.asyncio
-# async def test_asyncio(event_loop):
-#     app = Nougat()
-#
-#     app.create_server(event_loop)
-#
-#     await asyncio.sleep(10)
-#
-#     assert 1 == 2
+        res = TestClient(app).get('/article/word')
+        assert res.text == ''
+
+        res = TestClient(app).get('/article/path/123')
+        assert res.text == ''
+
+    def test_form_data_with_multipart(self, app):
+
+        class MainRouting(Routing):
+
+            @post('/')
+            async def multipart(self):
+                name = self.request.form.get('file')
+                return name.name
+
+        app.route(MainRouting)
+
+        data = FormData()
+        data.add_field('name', 'foo')
+        data.add_field('file', 'file content',
+                       filename='file.file',
+                       content_type='image/img')
+
+        res = TestClient(app).post('/', data=data)
+        assert res.text == 'file.file'
 
 
-app = Nougat()
+class TestMiddleware:
 
-class Basic(Routing):
+    def test_basic(self, app):
 
-    @get('/')
-    async def index(self):
-        return '123'
+        async def middleware(context, next):
 
-app.route(Basic)
-print("start running Test Case")
-res = TestClient(app).get('/')
-print(res)
-print(res.res_text)
+            await next()
+            context.response.res = 'hello'
+
+        app.use(middleware)
+
+        class MainRouting(Routing):
+
+            @get('/')
+            async def index(self):
+                return 'hello world'
+
+        app.route(MainRouting)
+
+        res = TestClient(app).get('/')
+
+        assert res.text == 'hello'
