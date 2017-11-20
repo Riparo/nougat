@@ -5,5 +5,5 @@ install:
   - pip install aiohttp click codecov pytest pytest-cov h11
   - python setup.py install
 script:
-  - pytest --cov=nougat
+  - python -m pytest --cov=nougat tests
   - codecov
