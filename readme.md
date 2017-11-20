@@ -1,8 +1,8 @@
 # nougat
 
-![PyPI](https://img.shields.io/pypi/pyversions/nougat.svg) ![PyPI](https://img.shields.io/pypi/status/nougat.svg) ![PyPI](https://img.shields.io/pypi/v/nougat.svg) ![PyPI](https://img.shields.io/pypi/l/nougat.svg) ![CircleCI branch](https://img.shields.io/circleci/project/github/Kilerd/nougat/master.svg)
+![PyPI](https://img.shields.io/pypi/pyversions/nougat.svg) ![PyPI](https://img.shields.io/pypi/status/nougat.svg) ![PyPI](https://img.shields.io/pypi/v/nougat.svg) ![PyPI](https://img.shields.io/pypi/l/nougat.svg) [![Build Status](https://travis-ci.org/Kilerd/nougat.svg?branch=master)](https://travis-ci.org/Kilerd/nougat)
 
-Nougat is an asynchronous web framework based on Python3.6 and curio, which focus on enhancing the experience of asynchronous web developing
+Nougat is an asynchronous web framework based on Python3.6, which focus on enhancing the experience of asynchronous web developing
 
 ## Installation
 Nougat relays on Python3.6 and DOES NOT support the elder version, which is hosted at Pypi. So you can install stable version through:

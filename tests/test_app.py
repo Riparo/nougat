@@ -84,7 +84,7 @@ class TestRouter:
         assert res.text == 'static route'
 
         res = TestClient(app).get('/')
-        assert res.text == 'Not Found'
+        assert res.status == 404
 
     def test_simple_type(self, app):
 
@@ -97,7 +97,8 @@ class TestRouter:
         app.route(MainRouting)
 
         res = TestClient(app).get('/article/')
-        assert res.text == 'Not Found'
+        assert res.status == 404
+        assert res.text == ''
 
         res = TestClient(app).get('/article/123')
         assert res.text == 'id: 123'
@@ -106,7 +107,7 @@ class TestRouter:
         assert res.text == 'id: word'
 
         res = TestClient(app).get('/article/path/123')
-        assert res.text == 'Not Found'
+        assert res.text == ''
 
     def test_unnamed_regex(self, app):
 
@@ -118,16 +119,16 @@ class TestRouter:
         app.route(MainRouting)
 
         res = TestClient(app).get('/article/')
-        assert res.text == 'Not Found'
+        assert res.text == ''
 
         res = TestClient(app).get('/article/123')
         assert res.text == 'hit'
 
         res = TestClient(app).get('/article/word')
-        assert res.text == 'Not Found'
+        assert res.text == ''
 
         res = TestClient(app).get('/article/path/123')
-        assert res.text == 'Not Found'
+        assert res.text == ''
 
     def test_named_regex(self, app):
 
@@ -139,16 +140,16 @@ class TestRouter:
         app.route(MainRouting)
 
         res = TestClient(app).get('/article/')
-        assert res.text == 'Not Found'
+        assert res.text == ''
 
         res = TestClient(app).get('/article/123')
         assert res.text == '123'
 
         res = TestClient(app).get('/article/word')
-        assert res.text == 'Not Found'
+        assert res.text == ''
 
         res = TestClient(app).get('/article/path/123')
-        assert res.text == 'Not Found'
+        assert res.text == ''
 
     def test_form_data_with_multipart(self, app):
 
