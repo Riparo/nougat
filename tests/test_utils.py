@@ -35,7 +35,7 @@ def test_second_param_is_not_next():
 
 def test_use_pass_middleware():
 
-    async def test(context, next):
+    async def test(req, res, next):
         pass
 
     is_middleware(test)

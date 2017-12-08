@@ -10,6 +10,8 @@ import io
 if TYPE_CHECKING:
     from nougat.app import Nougat
 
+__all__ = ['Request', 'Response']
+
 
 class Request:
 
@@ -111,7 +113,7 @@ class Response:
         self.__version = '1.1'
         self.status = status
 
-        self.res = ''
+        self.content = ''
         self.type = 'text/html'
         self.charset = 'utf-8'
 
@@ -132,7 +134,7 @@ class Response:
         :return:
         """
 
-        self.__body = self.res or ''
+        self.__body = self.content or ''
 
         self.set_header('Content-Type', "{};charset=".format(self.type, self.charset))
         self.set_header('Content-Length', '{}'.format(len(self.__body)))

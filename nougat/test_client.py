@@ -9,10 +9,6 @@ HOST = '127.0.0.1'
 PORT = 0
 
 
-class Proxy:
-    ret = None
-
-
 class TestClient:
     app = None
     loop = None

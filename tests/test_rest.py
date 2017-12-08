@@ -1,13 +1,13 @@
 import json
 import pytest
-from nougat import get, post, TestClient
-from nougat.rest import ResourceRouting, param, ParameterGroup, Param, params
-from nougat.exceptions import ParamNeedDefaultValueIfItsOptional, ParamRedefineException, ParamComingFromUnknownLocation, ParamCouldNotBeFormattedToTargetType
+from nougat import TestClient
+from nougat.router import *
+from nougat.exceptions import *
 
 
 class TestRestfulExtension:
 
-    def test_basis_parameter(self, app):
+    def test_basis_parameter(self, app, router):
 
         class MainRouting(ResourceRouting):
 
@@ -16,7 +16,8 @@ class TestRestfulExtension:
             async def static_route(self):
                 return 'hello {}'.format(self.params.name)
 
-        app.route(MainRouting)
+        router.add(MainRouting)
+        app.use(router)
 
         res = TestClient(app).get('/?name=world')
         assert res.text == 'hello world'
@@ -24,7 +25,7 @@ class TestRestfulExtension:
         res = TestClient(app).get('/')
         assert res.text == json.dumps({'name': 'miss parameter'})
 
-    def test_location(self, app):
+    def test_location(self, app, router):
         class MainRouting(ResourceRouting):
 
             @get('/url/:id')
@@ -52,7 +53,8 @@ class TestRestfulExtension:
             async def cookies_param(self):
                 return self.params.name
 
-        app.route(MainRouting)
+        router.add(MainRouting)
+        app.use(router)
 
         # url parameter
         res = TestClient(app).get('/url/1')
@@ -94,7 +96,7 @@ class TestRestfulExtension:
         assert res.status == 400
         assert res.text == json.dumps({'name': 'miss parameter'})
 
-    def test_multiple_location(self, app):
+    def test_multiple_location(self, app, router):
 
         class MainRouting(ResourceRouting):
 
@@ -103,7 +105,8 @@ class TestRestfulExtension:
             async def multiple_location(self):
                 return self.params.name
 
-        app.route(MainRouting)
+        router.add(MainRouting)
+        app.use(router)
 
         res = TestClient(app).post('/?name=foo')
         assert res.text == 'foo'
@@ -117,7 +120,7 @@ class TestRestfulExtension:
         res = TestClient(app).post('/')
         assert res.text == json.dumps({'name': 'miss parameter'})
 
-    def test_optional_param_without_default(self, app):
+    def test_optional_param_without_default(self, app, router):
         with pytest.raises(ParamNeedDefaultValueIfItsOptional):
             class MainRouting(ResourceRouting):
                 @get('/')
@@ -125,9 +128,10 @@ class TestRestfulExtension:
                 async def without_default(self):
                     return self.params.name
 
-            app.route(MainRouting)
+            router.add(MainRouting)
+            app.use(router)
 
-    def test_default_value(self, app):
+    def test_default_value(self, app, router):
 
         class MainRouting(ResourceRouting):
             @get('/')
@@ -135,7 +139,8 @@ class TestRestfulExtension:
             async def multiple_location(self):
                 return self.params.name
 
-        app.route(MainRouting)
+        router.add(MainRouting)
+        app.use(router)
 
         res = TestClient(app).get('/?name=bar')
         assert res.text == 'bar'
@@ -143,7 +148,7 @@ class TestRestfulExtension:
         res = TestClient(app).get('/')
         assert res.text == 'foo'
 
-    def test_warning(self, app):
+    def test_warning(self, app, router):
 
         class MainRouting(ResourceRouting):
             @get('/')
@@ -151,7 +156,8 @@ class TestRestfulExtension:
             async def multiple_location(self):
                 return self.params.name
 
-        app.route(MainRouting)
+        router.add(MainRouting)
+        app.use(router)
 
         res = TestClient(app).get('/?name=bar')
         assert res.text == 'bar'
@@ -159,7 +165,7 @@ class TestRestfulExtension:
         res = TestClient(app).get('/')
         assert res.text == json.dumps({'name': 'hello'})
 
-    def test_action(self, app):
+    def test_action(self, app, router):
 
         class MainRouting(ResourceRouting):
 
@@ -168,12 +174,13 @@ class TestRestfulExtension:
             async def action(self):
                 return self.params.user
 
-        app.route(MainRouting)
+        router.add(MainRouting)
+        app.use(router)
 
         res = TestClient(app).get('/?name=123')
         assert res.text == '123'
 
-    def test_append(self, app):
+    def test_append(self, app, router):
 
         class MainRouting(ResourceRouting):
             @get('/')
@@ -181,12 +188,13 @@ class TestRestfulExtension:
             async def action(self):
                 return self.params.name
 
-        app.route(MainRouting)
+        router.add(MainRouting)
+        app.use(router)
 
         res = TestClient(app).get('/', params={'name': 'hello'})
         assert res.text == json.dumps(['hello'])
 
-    def test_description(self, app):
+    def test_description(self, app, router):
 
         class MainRouting(ResourceRouting):
             @get('/')
@@ -194,12 +202,13 @@ class TestRestfulExtension:
             async def action(self):
                 return self.params.name
 
-        app.route(MainRouting)
+        router.add(MainRouting)
+        app.use(router)
 
         res = TestClient(app).get('/', params={'name': 'hello'})
         assert res.text == 'hello'
 
-    def test_parameter_group(self, app):
+    def test_parameter_group(self, app, router):
 
         class Pagination(ParameterGroup):
             now = Param('now', int, optional=True, default=1)
@@ -212,7 +221,8 @@ class TestRestfulExtension:
             async def show_list(self):
                 return '{} {}'.format(self.params.now, self.params.size)
 
-        app.route(MainRouting)
+        router.add(MainRouting)
+        app.use(router)
 
         res = TestClient(app).get('/list')
         assert res.text == '1 10'
@@ -226,7 +236,7 @@ class TestRestfulExtension:
         res = TestClient(app).get('/list', params={'now': 5, 'size': 15})
         assert res.text == '5 15'
 
-    def test_multiple_parameters(self, app):
+    def test_multiple_parameters(self, app, router):
 
         class MainRouting(ResourceRouting):
 
@@ -236,12 +246,13 @@ class TestRestfulExtension:
             async def hello(self):
                 return f"hello {self.params.first_name} {self.params.last_name}"
 
-        app.route(MainRouting)
+        router.add(MainRouting)
+        app.use(router)
 
         res = TestClient(app).get('/', params={'first_name': 'foo', 'last_name': 'bar'})
         assert res.text == 'hello foo bar'
 
-    def test_parameter_redefine(self, app):
+    def test_parameter_redefine(self, app, router):
         with pytest.raises(ParamRedefineException):
 
             class MainRouting(ResourceRouting):
@@ -252,9 +263,10 @@ class TestRestfulExtension:
                 async def redefine(self):
                     return 'fine'
 
-            app.route(MainRouting)
+            router.add(MainRouting)
+            app.use(router)
 
-    def test_param_come_from_unknown_location(self, app):
+    def test_param_come_from_unknown_location(self, app, router):
         with pytest.raises(ParamComingFromUnknownLocation):
             class MainRouting(ResourceRouting):
 
@@ -263,4 +275,7 @@ class TestRestfulExtension:
                 async def unknown(self):
                     return 'fine'
 
-            app.route(MainRouting)
+            router.add(MainRouting)
+            app.use(router)
+
+
