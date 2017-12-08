@@ -3,7 +3,7 @@ from nougat import Nougat, get, Routing, TestClient, post
 
 class TestRouting:
 
-    def test_redirect(self, app):
+    def test_redirect(self, app, router):
 
         class MainRouting(Routing):
 
@@ -17,7 +17,8 @@ class TestRouting:
 
                 return 'redirect after'
 
-        app.route(MainRouting)
+        router.add(MainRouting)
+        app.use(router)
 
         test = TestClient(app)
         res = test.get('/', allow_redirects=True)
@@ -25,7 +26,7 @@ class TestRouting:
         assert res.url == test.url('/after')
         assert res.text == 'redirect after'
 
-    def test_abort(self, app):
+    def test_abort(self, app, router):
 
         class MainRouting(Routing):
 
@@ -33,7 +34,8 @@ class TestRouting:
             async def index(self):
                 self.abort(451, 'Legal Reasons')
 
-        app.route(MainRouting)
+        router.add(MainRouting)
+        app.use(router)
 
         res = TestClient(app).get('/')
         assert res.status == 451
@@ -42,7 +44,7 @@ class TestRouting:
 
 class TestAddCustomResponse:
 
-    def test_add_header(self, app):
+    def test_add_header(self, app, router):
 
         class MainRouting(Routing):
 
@@ -50,24 +52,26 @@ class TestAddCustomResponse:
             async def index(self):
                 self.response.set_header('Keyword', 'Value')
 
-        app.route(MainRouting)
+        router.add(MainRouting)
+        app.use(router)
 
         res = TestClient(app).get('/')
         assert res.headers.get('Keyword', None) == 'Value'
 
-    def test_add_cookies(self, app):
+    def test_add_cookies(self, app, router):
 
         class MainRouting(Routing):
             @get('/')
             async def index(self):
                 self.response.set_cookies('Coo', 'Content')
 
-        app.route(MainRouting)
+        router.add(MainRouting)
+        app.use(router)
 
         res = TestClient(app).get('/')
         assert res.cookies.get('Coo', None).value == 'Content'
 
-    def test_custom_http_code(self, app):
+    def test_custom_http_code(self, app, router):
 
         class MainRouting(Routing):
 
@@ -75,12 +79,13 @@ class TestAddCustomResponse:
             async def index(self):
                 self.response.status = 400
 
-        app.route(MainRouting)
+        router.add(MainRouting)
+        app.use(router)
 
         res = TestClient(app).get('/')
         assert res.status == 400
 
-    def test_custom_response_type(self, app):
+    def test_custom_response_type(self, app, router):
 
         class MainRouting(Routing):
             @get('/')
@@ -88,13 +93,14 @@ class TestAddCustomResponse:
                 self.response.type = 'application/json'
                 return "[]"
 
-        app.route(MainRouting)
+        router.add(MainRouting)
+        app.use(router)
 
         res = TestClient(app).get('/')
         assert res.content_type == 'application/json'
         assert res.text == '[]'
 
-    def test_set_advanced_cookie(self, app):
+    def test_set_advanced_cookie(self, app, router):
         class MainRouting(Routing):
             @get('/')
             async def index(self):
@@ -108,23 +114,24 @@ class TestAddCustomResponse:
                     same_site='127.0.0.1:8000'
                 )
 
-        app.route(MainRouting)
+        router.add(MainRouting)
+        app.use(router)
 
         res = TestClient(app).get('/')
         assert res.cookies.get('Coo', None).value == 'Content'
 
 
-
 class TestGetRoutingInformation:
 
-    def test_get_from_query(self, app):
+    def test_get_from_query(self, app, router):
 
         class MainRouting(Routing):
             @get('/')
             async def index(self):
                 return self.request.query.get('hello', None)
 
-        app.route(MainRouting)
+        router.add(MainRouting)
+        app.use(router)
 
         res = TestClient(app).get('/')
         assert res.text == ''
@@ -132,7 +139,7 @@ class TestGetRoutingInformation:
         res = TestClient(app).get('/?hello=world')
         assert res.text == 'world'
 
-    def test_get_from_form(self, app):
+    def test_get_from_form(self, app, router):
 
         class MainRouting(Routing):
             @post('/')
@@ -141,7 +148,8 @@ class TestGetRoutingInformation:
                 if hello:
                     return hello[0]
 
-        app.route(MainRouting)
+        router.add(MainRouting)
+        app.use(router)
 
         res = TestClient(app).post('/')
         assert res.text == ''
@@ -149,7 +157,7 @@ class TestGetRoutingInformation:
         res = TestClient(app).post('/', data={'hello': 'world'})
         assert res.text == 'world'
 
-    def test_get_from_header(self, app):
+    def test_get_from_header(self, app, router):
 
         class MainRouting(Routing):
 
@@ -157,38 +165,41 @@ class TestGetRoutingInformation:
             async def index(self):
                 return self.request.headers.get('custom-header', 'None')
 
-        app.route(MainRouting)
+        router.add(MainRouting)
+        app.use(router)
 
         res = TestClient(app).get('/', headers={'custom-header': 'hello world'})
 
         assert res.text == 'hello world'
 
-    def test_get_from_cookie(self, app):
+    def test_get_from_cookie(self, app, router):
 
         class MainRouting(Routing):
             @get('/')
             async def index(self):
                 return self.request.cookies.get('custom-cookie', 'hello world')
 
-        app.route(MainRouting)
+        router.add(MainRouting)
+        app.use(router)
 
         res = TestClient(app).get('/', cookies={'custom-cookie': 'hello world', 'append': 'more'})
 
         assert res.text == '"hello world"'
 
-    def test_get_ip(self, app):
+    def test_get_ip(self, app, router):
 
         class MainRouting(Routing):
             @get('/')
             async def index(self):
                 return self.request.ip
 
-        app.route(MainRouting)
+        router.add(MainRouting)
+        app.use(router)
 
         res = TestClient(app).get('/')
         assert res.text == '127.0.0.1'
 
-    def test_json(self, app):
+    def test_json(self, app, router):
 
         class MainRouting(Routing):
             @post('/')
@@ -198,7 +209,8 @@ class TestGetRoutingInformation:
                 if hello:
                     return hello
 
-        app.route(MainRouting)
+        router.add(MainRouting)
+        app.use(router)
 
         res = TestClient(app).post('/')
         assert res.text == ''

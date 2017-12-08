@@ -1,12 +1,11 @@
-from nougat import Nougat
-from nougat.routing import Routing, get, post, put, patch ,delete
+from nougat.router import Routing, get, post, put, patch, delete
 from nougat.test_client import TestClient
 from aiohttp import FormData
 
 
 class TestBasicApplication:
 
-    def test_get(self, app):
+    def test_get(self, app, router):
 
         class Basic(Routing):
 
@@ -14,55 +13,60 @@ class TestBasicApplication:
             async def index(self):
                 return 'hello world'
 
-        app.route(Basic)
+        router.add(Basic)
+        app.use(router)
 
         res = TestClient(app).get('/')
         assert res.text == 'hello world'
 
-    def test_post(self, app):
+    def test_post(self, app, router):
 
         class Basic(Routing):
             @post('/')
             async def index(self):
                 return 'post method'
 
-        app.route(Basic)
+        router.add(Basic)
+        app.use(router)
 
         res = TestClient(app).post('/')
         assert res.text == 'post method'
 
-    def test_put(self, app):
+    def test_put(self, app, router):
 
         class Basic(Routing):
             @put('/')
             async def index(self):
                 return 'put method'
 
-        app.route(Basic)
+        router.add(Basic)
+        app.use(router)
 
         res = TestClient(app).put('/')
         assert res.text == 'put method'
 
-    def test_patch(self, app):
+    def test_patch(self, app, router):
 
         class Basic(Routing):
             @patch('/')
             async def index(self):
                 return 'patch method'
 
-        app.route(Basic)
+        router.add(Basic)
+        app.use(router)
 
         res = TestClient(app).patch('/')
         assert res.text == 'patch method'
 
-    def test_delete(self, app):
+    def test_delete(self, app, router):
 
         class Basic(Routing):
             @delete('/')
             async def index(self):
                 return 'delete method'
 
-        app.route(Basic)
+        router.add(Basic)
+        app.use(router)
 
         res = TestClient(app).delete('/')
         assert res.text == 'delete method'
@@ -70,7 +74,7 @@ class TestBasicApplication:
 
 class TestRouter:
 
-    def test_static(self, app):
+    def test_static(self, app, router):
 
         class MainRouting(Routing):
 
@@ -78,7 +82,8 @@ class TestRouter:
             async def static_route(self):
                 return 'static route'
 
-        app.route(MainRouting)
+        router.add(MainRouting)
+        app.use(router)
 
         res = TestClient(app).get('/static')
         assert res.text == 'static route'
@@ -86,7 +91,7 @@ class TestRouter:
         res = TestClient(app).get('/')
         assert res.status == 404
 
-    def test_simple_type(self, app):
+    def test_simple_type(self, app, router):
 
         class MainRouting(Routing):
 
@@ -94,7 +99,8 @@ class TestRouter:
             async def article_simple(self):
                 return 'id: {}'.format(self.request.url_dict.get('id'))
 
-        app.route(MainRouting)
+        router.add(MainRouting)
+        app.use(router)
 
         res = TestClient(app).get('/article/')
         assert res.status == 404
@@ -109,14 +115,15 @@ class TestRouter:
         res = TestClient(app).get('/article/path/123')
         assert res.text == ''
 
-    def test_unnamed_regex(self, app):
+    def test_unnamed_regex(self, app, router):
 
         class MainRouting(Routing):
             @get('/article/[0-9]+')
             async def article_simple(self):
                 return 'hit'
 
-        app.route(MainRouting)
+        router.add(MainRouting)
+        app.use(router)
 
         res = TestClient(app).get('/article/')
         assert res.text == ''
@@ -130,14 +137,15 @@ class TestRouter:
         res = TestClient(app).get('/article/path/123')
         assert res.text == ''
 
-    def test_named_regex(self, app):
+    def test_named_regex(self, app, router):
 
         class MainRouting(Routing):
             @get('/article/:id<[0-9]+>')
             async def article_simple(self):
                 return self.request.url_dict.get('id', 'None')
 
-        app.route(MainRouting)
+        router.add(MainRouting)
+        app.use(router)
 
         res = TestClient(app).get('/article/')
         assert res.text == ''
@@ -151,7 +159,7 @@ class TestRouter:
         res = TestClient(app).get('/article/path/123')
         assert res.text == ''
 
-    def test_form_data_with_multipart(self, app):
+    def test_form_data_with_multipart(self, app, router):
 
         class MainRouting(Routing):
 
@@ -160,7 +168,8 @@ class TestRouter:
                 name = self.request.form.get('file')
                 return name.name
 
-        app.route(MainRouting)
+        router.add(MainRouting)
+        app.use(router)
 
         data = FormData()
         data.add_field('name', 'foo')
@@ -174,12 +183,12 @@ class TestRouter:
 
 class TestMiddleware:
 
-    def test_basic(self, app):
+    def test_basic(self, app, router):
 
-        async def middleware(context, next):
+        async def middleware(req, res, next):
 
             await next()
-            context.response.res = 'hello'
+            res.content = 'hello'
 
         app.use(middleware)
 
@@ -189,7 +198,8 @@ class TestMiddleware:
             async def index(self):
                 return 'hello world'
 
-        app.route(MainRouting)
+        router.add(MainRouting)
+        app.use(router)
 
         res = TestClient(app).get('/')
 

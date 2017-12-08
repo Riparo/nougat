@@ -1,4 +1,8 @@
 
+
+__all__ = ['Config']
+
+
 class Config(dict):
 
     def __init__(self):

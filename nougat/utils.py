@@ -10,18 +10,22 @@ def is_middleware(func):
     """
     args = list(inspect.signature(func).parameters.items())
 
-    if not inspect.iscoroutinefunction(func):
-        raise UnknownMiddlewareException("middleware {} should be awaitable".format(func.__name__))
+    # if not inspect.isawaitable(func):
+    #     raise UnknownMiddlewareException("middleware {} should be awaitable".format(func.__name__))
 
-    if len(args) != 2:
-        raise UnknownMiddlewareException("middleware {} should has 2 params named context and next".format(func.__name__))
+    if len(args) != 3:
+        raise UnknownMiddlewareException("middleware {} should has 3 params named req, res and next".format(func.__name__))
 
-    if args[0][0] != 'context':
-        raise UnknownMiddlewareException("the first param's name of middleware {} should be context".format(func.__name__))
+    if args[0][0] != 'req':
+        raise UnknownMiddlewareException("the first param's name of middleware {} should be req".format(func.__name__))
 
-    if args[1][0] != 'next':
-        raise UnknownMiddlewareException("the second param's name of middleware {} should be next".format(func.__name__))
+    if args[1][0] != 'res':
+        raise UnknownMiddlewareException("the second param's name of middleware {} should be res".format(func.__name__))
 
+    if args[2][0] != 'next':
+        raise UnknownMiddlewareException("the third param's name of middleware {} should be next".format(func.__name__))
+
+    return True
 
 def response_format(content):
     """
@@ -59,7 +63,11 @@ class cached_property(object):
 
 async def controller_result_to_response(context, next):
     result = await next()
-    context.response.res = result
+    context.response.content = result
+
+
+async def empty():
+    pass
 
 
 class ConsoleColor:

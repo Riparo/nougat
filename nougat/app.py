@@ -1,47 +1,40 @@
 import logging
 from functools import partial
 from nougat.exceptions import *
-from nougat.utils import is_middleware, controller_result_to_response
+from nougat.utils import is_middleware, empty
 from nougat.config import Config
 
-from typing import List, Tuple, TypeVar, Type, Set, Union, Callable
 from nougat.context import Request, Response
-from nougat.routing import Routing, Route, Router
 
 from nougat.http_wrapper import HTTPWrapper
+from typing import List, Callable
 import asyncio
 
 
-RoutingType = TypeVar('RoutingType', bound=Routing)
+__all__ = ['Nougat']
 
 
 class Nougat(object):
 
-    def __init__(self, name='Nougat APP') -> None:
+    __slots__ = ['name', 'config', '__chain', 'debug']
 
-        self.name = name
-        self.router: 'Router' = Router()
+    def __init__(self, name: str ='Nougat APP') -> None:
 
-        self.config = Config()
-        self.__middleware_chain = []
+        self.name: str = name
 
-        self.sections = {}
-
+        self.config: 'Config' = Config()
+        self.__chain: List[Callable] = []
 
         self.debug: bool = False
 
-        # new version
-        self.__routes: Set[Tuple('Routing', 'Route')] = set()
-
-    def use(self, middleware):
+    def use(self, middleware: Callable):
         """
         Register Middleware
         :param middleware: The Middleware Function
         """
 
-        is_middleware(middleware)
-        middleware = middleware
-        self.__middleware_chain.append(middleware)
+        if is_middleware(middleware):
+            self.__chain.append(middleware)
 
     async def handler(self, request: 'Request'):
         """
@@ -50,45 +43,20 @@ class Nougat(object):
         :return: The Response instance
         """
 
-        response = Response()
+        response: 'Response' = Response()
+
+        handler: Callable = empty
+        chain_reverse = self.__chain[::-1]
+        for middleware in chain_reverse:
+                handler = partial(middleware, req=request, res=response, next=handler)
 
         try:
 
-            # match the Routing and Route from Router
-            routing_class, route, url_dict = self.router.match(request.method, request.url.path)
-            request.url_dict = url_dict
-            routing = routing_class(self, request, response, route)
-
-            # Handling Middleware
-            handler = partial(route.controller, routing)
-
-            # save the return value to response.res
-            handler = partial(controller_result_to_response, context=routing, next=handler)  # save the result to response res
-
-            # Routing Time
-            handler = partial(routing.handler, route=route, controller=handler)
-
-            # Global Middleware
-            chain_reverse = self.__middleware_chain[::-1]
-            for middleware in chain_reverse:
-                handler = partial(middleware, context=routing, next=handler)
-
             await handler()
-
-            # Formatting the Response data
-
-        except ResponseContentCouldNotFormat:
-            response.type = 'text/plain'
-            response.res = "unable to format response"
-
-        except RouteNoMatchException:
-            response.status = 404
-            response.type = 'text/plain'
-            response.res = None
 
         except HttpException as e:
             response.status = e.status
-            response.res = e.body
+            response.content = e.body
 
         return response
 
@@ -98,7 +66,6 @@ class Nougat(object):
         :param host: The listening host
         :param port: The listening port
         :param debug: whether it is in debug mod or not
-        :return:
         """
         if debug:
             print("Nougat is listening on http://{}:{}\n".format(host, port))
@@ -109,30 +76,6 @@ class Nougat(object):
             loop.run_forever()
         except KeyboardInterrupt:
             loop.close()
-
-    def doc(self):
-        """
-        generate the api document
-        :return: the json of api structure
-        """
-        return {
-            'name': self.name,
-            'sections': [section.doc() for _, section in self.sections.items()]
-        }
-
-    def route(self, routing: Type[RoutingType]):
-        """
-        Register Routing class
-        :param routing: Routing Class, not its instance
-        :return:
-        """
-        logging.info('adding Routing {}'.format(routing.__class__))
-
-        routing_prefix = routing.prefix
-
-        for route in routing.routes():
-            route.set_prefix(routing_prefix)
-            self.router.add_routing(routing, route)
 
     async def start_server(self, host: str, port: int):
 

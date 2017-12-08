@@ -1,6 +1,6 @@
 from nougat import Nougat
-from nougat.routing import Routing
-from nougat.routing import get, post
+from nougat.router import Routing
+from nougat.router import get, post
 
 app = Nougat()
 

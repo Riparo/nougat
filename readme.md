@@ -1,6 +1,6 @@
 # nougat
 
-![PyPI](https://img.shields.io/pypi/pyversions/nougat.svg) ![PyPI](https://img.shields.io/pypi/status/nougat.svg) ![PyPI](https://img.shields.io/pypi/v/nougat.svg) ![PyPI](https://img.shields.io/pypi/l/nougat.svg) [![Build Status](https://travis-ci.org/Kilerd/nougat.svg?branch=master)](https://travis-ci.org/Kilerd/nougat)
+![PyPI](https://img.shields.io/pypi/pyversions/nougat.svg) ![PyPI](https://img.shields.io/pypi/status/nougat.svg) ![PyPI](https://img.shields.io/pypi/v/nougat.svg) ![PyPI](https://img.shields.io/pypi/l/nougat.svg) [![Build Status](https://travis-ci.org/NougatWeb/nougat.svg?branch=master)](https://travis-ci.org/NougatWeb/nougat)
 
 Nougat is an asynchronous web framework based on Python3.6, which focus on enhancing the experience of asynchronous web developing
 
@@ -11,24 +11,22 @@ pip3 install nougat
 ```
 #### Develop Version
 if you wanna test the new feature of Nougat, you can install it from Github:
-**In Develop Verson it would has some unknown bugs and unstable factors, SO PLEASE CHOOSE IT DELIBERATELY!**
+**In Develop Version it would has some unknown bugs and unstable factors, SO PLEASE CHOOSE IT DELIBERATELY!**
 ```bash
 pip3 install git@github.com:Kilerd/nougat.git@develop
 ```
 
 ### Minimal Usage
 ```python
-from nougat import Nougat, Routing, get
+from nougat import Nougat
 
 app = Nougat()
 
-class MainRouting(Routing):
+async def m(req, res, next):
+    res.content = "hello world"
+    await next()
 
-    @get('/')
-    async def index(self):
-        return 'Hello world'
-
-app.route(MainRouting)
+app.use(m)
 
 app.run(debug=True)
 ```
