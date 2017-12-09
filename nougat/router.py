@@ -136,6 +136,7 @@ class Route:
 class Routing:
 
     prefix: str = ''
+    middleware: List[Callable] = []
 
     def __init__(self, app, request, response, route: 'Route'):
         self.request = request
@@ -169,6 +170,10 @@ class Routing:
 
         return routes
 
+    async def _handler(self, route: 'Route', controller):
+        ret = await controller()
+        self.response.content = ret
+
     async def handler(self, route: 'Route', controller):
         """
         let controller run through the middleware of routing
@@ -176,9 +181,13 @@ class Routing:
         :param controller: the controller function
         :return:
         """
+        handler = partial(self._handler, route=route, controller=controller)
 
-        ret = await controller()
-        self.response.content = ret
+        chain_reverse = self.middleware[::-1]
+        for middleware in chain_reverse:
+            handler = partial(middleware, context=self, next=handler)
+
+        await handler()
 
 
 class Param:
@@ -337,7 +346,7 @@ class ResourceRouting(Routing):
             return True, error_dict
         return False, error_dict
 
-    async def handler(self, route: 'Route', controller):
+    async def _handler(self, route: 'Route', controller):
 
         # format restful parameters
 
