@@ -3,7 +3,7 @@ import re
 from nougat.exceptions import ParamRedefineException, RouteNoMatchException, HttpException, \
     ResponseContentCouldNotFormat, \
     ParamNeedDefaultValueIfItsOptional, ParamComingFromUnknownLocation, ParamCouldNotBeFormattedToTargetType
-from nougat.utils import controller_result_to_response, response_format
+from nougat.utils import response_format
 from functools import lru_cache, partial
 import logging
 
@@ -173,11 +173,12 @@ class Routing:
         """
         let controller run through the middleware of routing
         :param route: which route is this request
-        :param controller: the controller function wrapped with `controller_result_to_response`
+        :param controller: the controller function
         :return:
         """
 
-        await controller()
+        ret = await controller()
+        self.response.content = ret
 
 
 class Param:
@@ -304,7 +305,6 @@ class ResourceRouting(Routing):
                         else:
                             ret.append(value_on_location)
 
-            print(name, ret)
             # set default value if optional is True and ret is empty
             if not ret:
                 if param_info.optional:
@@ -350,8 +350,11 @@ class ResourceRouting(Routing):
             self.response.content = result
 
         else:
-            await controller()
-            response_type, result = response_format(self.response.content)
+            ret = await controller()
+            if isinstance(ret, tuple) and len(ret) == 2 and isinstance(ret[1], int):
+                self.response.status = ret[1]
+                ret = ret[0]
+            response_type, result = response_format(ret)
             self.response.type = response_type
             self.response.content = result
 
@@ -412,9 +415,6 @@ class Router:
             routing = routing_class(self, req, res, route)
 
             handler = partial(route.controller, routing)
-
-            # save the return value to response.res
-            handler = partial(controller_result_to_response, context=routing, next=handler)
 
             handler = partial(routing.handler, route=route, controller=handler)
 
