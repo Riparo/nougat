@@ -417,11 +417,11 @@ class Router:
     async def __call__(self, req: 'Request', res: 'Response', next: Callable):
 
         try:
-
+            app = req.app
             # match the Routing and Route from Router
             routing_class, route, url_dict = self.match(req.method, req.url.path)
             req.url_dict = url_dict
-            routing = routing_class(self, req, res, route)
+            routing = routing_class(app, req, res, route)
 
             handler = partial(route.controller, routing)
 
