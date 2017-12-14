@@ -1,9 +1,17 @@
 language: python
 python:
-  - "3.6"
+- '3.6'
 install:
-  - pip install aiohttp click codecov pytest pytest-cov h11
-  - python setup.py install
+- pip install aiohttp click codecov pytest pytest-cov h11
+- python setup.py install
 script:
-  - python -m pytest --cov=nougat tests
-  - codecov
+- python -m pytest --cov=nougat tests
+- codecov
+deploy:
+  provider: pypi
+  user: kilerd
+  password:
+    secure: c8IRT1bpy1ag1EXrSHwSdHAwBugnaNbdEGca6cbJOfX77I6QJtW/PlFwcfdi7UBOQI/YELAD+UUgxwpShOoNhgj0weOtS7nFXd4D/W2DmjTNOMJ43K2hZSlvl28RaAvxt3YG965FnAv1e/nKVFDqt7Y9fUuG0zFZXPBkxJhf3urMYfVLS6KeYJz4QHHw8PewLqBMm/nuu8Yz1T8d/A6DJZPo3QBPxjiBPzDIxfp6KPKXaUFydK7VI00DaTPVSJXhDiO3j0vjPoh16d429XEmRDr34Id1oTGj9eSxeNhg4Q/1FmQBQvOJ/gCX5Jz2Mr0o1s5Vci+kUokbe8aAGwlKRVCTU/XvbpkEZbiMyJhzDDd4VK7DsCLi8pgWFwksjLF3EiS+sL8nzgx/mDUNebhDipSqu60aWOSkOWN6YKOmKOfHC3d5JKtKMoHJ1aBD27g/cHJhxhgdKzG3ergFatmb+epcKtdteGcravd9rRWnk9cqwa28Li0AcM/BlxXypOhY9+I8BLegvYpIB88YVZAwtBSK+BhgI0EvDfI22b6JGBBBPMHv3OlamFhlnlC94Myjzb0AWOs3cPmzB4yNEqchsQOf3rHiyxi1RCoSlOx0WZ66obnZbSsa/SWf71oSFFZap6Rxt9aytpz9tvD3iwqw61UvcI42q1xyxsXcrW6l04w=
+  distributions: "bdist_wheel"
+  on:
+    tags: true
