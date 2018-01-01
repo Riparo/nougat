@@ -101,7 +101,7 @@ class HTTPWrapper(object):
 
         if app.debug:
             handle_time = int((datetime.datetime.now()-start_time).total_seconds() * 10000)/10
-            print('%s %15s   %12s %14sms   [%s]\t%s' % (
+            print('%s %17s   %12s %14sms   [%s]\t%s' % (
                 start_time.strftime('%Y/%m/%d %I:%M:%S'),
                 ConsoleColor.yellow(method.upper()),
                 ConsoleColor.blue(str(response_status)) if 199 < response_status <= 400 else ConsoleColor.red(str(response_status)),

@@ -34,8 +34,8 @@ app.run(debug=True)
 
 ## Document
 
-click [here](https://kilerd.github.io/nougat/) to see document.
+click [here](https://nougatweb.github.io/nougat/) to see document.
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](https://github.com/Kilerd/nougat/blob/master/LICENSE) file for details.
+This project is licensed under the MIT License - see the [LICENSE](https://github.com/NougatWeb/nougat/blob/master/LICENSE) file for details.

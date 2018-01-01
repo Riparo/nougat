@@ -1,4 +1,5 @@
-from nougat import Nougat, get, Routing, TestClient, post
+from nougat.router import Routing, ResourceRouting, get, post
+from nougat import TestClient
 
 
 class TestRouting:
