@@ -144,13 +144,15 @@ class Routing:
         self._route = route
         self.app = app
 
-    def redirect(self, url):
+    def redirect(self, url, forever: bool=False):
         """
         redirect to another page
         :param url: the page need to go
+        :param forever: if it is forever redirect
         """
         self.response.set_header("Location", url)
-        self.abort(302)
+        code = 301 if forever else 302
+        self.abort(code)
 
     def abort(self, code: int, message: str = None) -> None:
         """
