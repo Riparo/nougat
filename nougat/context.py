@@ -136,7 +136,7 @@ class Response:
 
         self.__body = self.content or ''
         self.set_header('Content-Type', "{};charset={}".format(self.type, self.charset))
-        self.set_header('Content-Length', '{}'.format(len(self.__body)))
+        self.set_header('Content-Length', '{}'.format(len(self.__body.encode(self.charset))))
 
     def set_header(self, key, value):
         """
