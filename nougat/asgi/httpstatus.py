@@ -2,7 +2,11 @@
 __all__ = ['STATUS_CODES']
 
 STATUS_CODES = {
+    101: 'Switching Protocols',
+
     200: 'OK',
+    201: 'Created',
+    202: 'Accepted',
 
     301: 'Moved Permanently',
     302: 'Found',

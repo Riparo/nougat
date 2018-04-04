@@ -1,33 +1,37 @@
 from nougat import Nougat
-from nougat.router import Routing
-from nougat.router import get, post
+from nougat.router import Routing, get, Router, ResourceRouting, post, param
+from nougat.test_client import TestClient
+import asyncio
 
 app = Nougat()
+router = Router()
 
+class Basic(ResourceRouting):
 
-class CommonRouting(Routing):
-
-    @get('/')
-    def index(self):
+    @get('/1')
+    async def index(self):
         return 'hello world'
 
-    @get('/user')
-    def user_index(self):
-        return 'hello user'
-
-    @get('/named/:id')
-    def simple_type(self):
-        return 'simple'
-
-    @get('/user/:id<[0-9]+>')
-    def named_regex_type(self):
-        return 'named'
-
-    @get('/.*')
-    def unnamed_regex_type(self):
-        return 'unnamed'
+    @post('/post')
+    @param('name', str, location='form')
+    async def form_param(self):
+        return self.params.name
 
 
-app.route(CommonRouting)
+class MainRouting(Routing):
 
-app.run(debug=True)
+    @get('/')
+    async def index(self):
+
+        self.redirect('/after')
+
+    @get('/after')
+    async def redirect_after(self):
+
+        return 'redirect after'
+
+router.add(Basic)
+router.add(MainRouting)
+app.use(router)
+
+app.run()

@@ -71,13 +71,13 @@ class Route:
 
         self.__route_prefix = ''
 
-        self.__route: Set[Tuple[str, str]] = set()
-        self.__route.add((method.upper(), route))
+        self.route: Set[Tuple[str, str]] = set()
+        self.route.add((method.upper(), route))
 
         self.controller: Callable = controller
         self.params = {}
 
-        self.__route_pattern: List[Tuple[str, Any]] = []
+        self.route_pattern: List[Tuple[str, Any]] = []
 
     def add_param(self,
                   name: str,
@@ -93,16 +93,16 @@ class Route:
 
         if name in self.params:
             raise ParamRedefineException(
-                " / ".join(["{} {}".format(method, target) for method, target in list(self.__route)]),
+                " / ".join(["{} {}".format(method, target) for method, target in list(self.route)]),
                 name
             )
 
         self.params[name] = Param(name, type, location, optional, default, action, append, description, warning)
 
     def __route_pattern_generator(self):
-        if self.__route:
-            self.__route_pattern = []
-            for method, route in self.__route:
+        if self.route:
+            self.route_pattern = []
+            for method, route in self.route:
                 route = '{}{}'.format(self.__route_prefix, route)
                 parameters: List[Tuple[str, str, str, str]] = DYNAMIC_ROUTE_PATTERN.findall(route)
                 parameters_pattern: List[Tuple[str, str]] = [(old, "(?P<{}>{})".format(name, pattern or '[^/]+')) for (old, name, _, pattern) in parameters]
@@ -110,7 +110,7 @@ class Route:
                 for old, param_pattern in parameters_pattern:
                     route_pattern = route_pattern.replace(old, param_pattern)
 
-                self.__route_pattern.append((method, re.compile(route_pattern)))
+                self.route_pattern.append((method, re.compile(route_pattern)))
 
     def set_prefix(self, prefix: str):
         self.__route_prefix = prefix
@@ -118,14 +118,14 @@ class Route:
         self.__route_pattern_generator()
 
     @property
-    def route(self) -> List[Tuple[str, str]]:
-        return list(self.__route)
+    def routes(self) -> List[Tuple[str, str]]:
+        return list(self.route)
 
     def add_route(self, method: str, route: str):
-        self.__route.add((method, route))
+        self.route.add((method, route))
 
     def match(self, method: str, route: str) -> Tuple[bool, Optional[dict]]:
-        for _method, pattern in self.__route_pattern:
+        for _method, pattern in self.route_pattern:
             _match = pattern.fullmatch(route)
             if _method == method and _match:
                 return True, _match.groupdict()
@@ -296,7 +296,6 @@ class ResourceRouting(Routing):
         _parameters: Dict[str, Any] = {}
         error_dict: Dict[str, str] = {}
         for name, param_info in self._route.params.items():
-
             param_name = param_info.action or name
 
             ret = []
@@ -440,7 +439,7 @@ class Router:
         except RouteNoMatchException:
             res.status = 404
             res.type = 'text/plain'
-            res.content = None
+            res.content = ''
 
         await next()
 
