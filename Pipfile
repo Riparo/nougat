@@ -1,0 +1,30 @@
+[[source]]
+
+url = "https://pypi.python.org/simple"
+verify_ssl = true
+name = "pypi"
+
+
+[packages]
+
+yarl = "*"
+toml = "*"
+fire = "*"
+watchdog = "*"
+websockets = "*"
+httptools = "*"
+aiohttp = "*"
+"e1839a8" = {path = ".", editable = true}
+codecov = "*"
+pytest-cov = "*"
+
+
+[dev-packages]
+
+pytest = "*"
+pytest-asyncio = "*"
+
+
+[requires]
+
+python_version = "3.6"
