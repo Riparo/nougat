@@ -2,11 +2,12 @@ language: python
 python:
 - '3.6'
 install:
-- pip install aiohttp codecov pytest pytest-cov h11
-- python setup.py install
+- pip install pipenv
+- pipenv sync
+- pip install .
 script:
-- python -m pytest --cov=nougat tests
-- codecov
+- pipenv run python -m pytest --cov=nougat tests
+- pipenv run codecov
 deploy:
   provider: pypi
   user: kilerd

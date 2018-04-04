@@ -29,11 +29,13 @@ setup(
 
     install_requires=[
         'aiohttp',
-        'h11>=0.7.0',
+        'httptools',
         'yarl>=0.13.0',
         'toml>=0.9.4',
         'fire>=0.1.3',
-        'watchdog>=0.8.3'
+        'watchdog>=0.8.3',
+        'websockets',
+
     ],
     entry_points='''
         [console_scripts]
