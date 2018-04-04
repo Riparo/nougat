@@ -17,12 +17,9 @@ aiohttp = "*"
 "e1839a8" = {path = ".", editable = true}
 codecov = "*"
 pytest-cov = "*"
-
-
-[dev-packages]
-
 pytest = "*"
 pytest-asyncio = "*"
+
 
 
 [requires]
