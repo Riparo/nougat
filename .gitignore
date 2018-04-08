@@ -94,3 +94,5 @@ ENV/
 .ropeproject
 
 /.idea
+.pytest_cache
+demo_websocket.py

@@ -1,14 +1,21 @@
-from setuptools import setup
+from setuptools import setup, find_packages
+from codecs import open
 from os import path
-from nougat import __version__
+
+__version__ = '0.2.5.dev1'
 
 here = path.abspath(path.dirname(__file__))
+
+# Get the long description from the README file
+with open(path.join(here, 'readme.md'), encoding='utf-8') as f:
+    long_description = f.read()
 
 setup(
     name='nougat',
     version=__version__,
-    description='Async API framework',
-    url='https://github.com/NougatWeb/nougat',
+    description='Async web framework',
+    long_description=long_description,
+    url='https://github.com/Kilerd/nougat',
 
     author='Kilerd Chan',
     author_mail='blove694@gmail.com',
@@ -25,8 +32,8 @@ setup(
 
     keywords='web framework async',
 
-    packages=['nougat'],
-
+    packages=find_packages(exclude=['docs', 'demo', 'tests*']),
+    include_package_data=True,
     install_requires=[
         'aiohttp',
         'httptools',
@@ -43,4 +50,3 @@ setup(
     ''',
     python_requires='>=3.6',
 )
-
