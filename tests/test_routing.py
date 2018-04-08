@@ -1,10 +1,12 @@
 from nougat.router import Routing, ResourceRouting, get, post
 from nougat import TestClient
+import pytest
 
 
 class TestRouting:
 
-    def test_redirect(self, app, router):
+    @pytest.mark.asyncio
+    async def test_redirect(self, app, router, port):
 
         class MainRouting(Routing):
 
@@ -21,13 +23,14 @@ class TestRouting:
         router.add(MainRouting)
         app.use(router)
 
-        test = TestClient(app)
-        res = test.get('/', allow_redirects=True)
-        #
-        assert res.url == test.url('/after')
-        assert res.text == 'redirect after'
+        async with TestClient(app, port) as client:
 
-    def test_abort(self, app, router):
+            test = await client.get('/')
+            assert test.url == client.url('/after')
+            assert test.text == 'redirect after'
+
+    @pytest.mark.asyncio
+    async def test_abort(self, app, router, port):
 
         class MainRouting(Routing):
 
@@ -38,14 +41,16 @@ class TestRouting:
         router.add(MainRouting)
         app.use(router)
 
-        res = TestClient(app).get('/')
-        assert res.status == 451
-        assert res.text == 'Legal Reasons'
+        async with TestClient(app, port) as client:
+            res = await client.get('/')
+            assert res.status == 451
+            assert res.text == 'Legal Reasons'
 
 
 class TestAddCustomResponse:
 
-    def test_add_header(self, app, router):
+    @pytest.mark.asyncio
+    async def test_add_header(self, app, router, port):
 
         class MainRouting(Routing):
 
@@ -56,10 +61,12 @@ class TestAddCustomResponse:
         router.add(MainRouting)
         app.use(router)
 
-        res = TestClient(app).get('/')
-        assert res.headers.get('Keyword', None) == 'Value'
+        async with TestClient(app, port) as client:
+            res = await client.get('/')
+            assert res.headers.get('Keyword', None) == 'Value'
 
-    def test_add_cookies(self, app, router):
+    @pytest.mark.asyncio
+    async def test_add_cookies(self, app, router, port):
 
         class MainRouting(Routing):
             @get('/')
@@ -69,10 +76,12 @@ class TestAddCustomResponse:
         router.add(MainRouting)
         app.use(router)
 
-        res = TestClient(app).get('/')
-        assert res.cookies.get('Coo', None).value == 'Content'
+        async with TestClient(app, port) as client:
+            res = await client.get('/')
+            assert res.cookies.get('Coo', None).value == 'Content'
 
-    def test_custom_http_code(self, app, router):
+    @pytest.mark.asyncio
+    async def test_custom_http_code(self, app, router, port):
 
         class MainRouting(Routing):
 
@@ -83,10 +92,12 @@ class TestAddCustomResponse:
         router.add(MainRouting)
         app.use(router)
 
-        res = TestClient(app).get('/')
-        assert res.status == 400
+        async with TestClient(app, port) as client:
+            res = await client.get('/')
+            assert res.status == 400
 
-    def test_custom_response_type(self, app, router):
+    @pytest.mark.asyncio
+    async def test_custom_response_type(self, app, router, port):
 
         class MainRouting(Routing):
             @get('/')
@@ -97,11 +108,13 @@ class TestAddCustomResponse:
         router.add(MainRouting)
         app.use(router)
 
-        res = TestClient(app).get('/')
-        assert res.content_type == 'application/json'
-        assert res.text == '[]'
+        async with TestClient(app, port) as client:
+            res = await client.get('/')
+            assert res.content_type == 'application/json'
+            assert res.text == '[]'
 
-    def test_set_advanced_cookie(self, app, router):
+    @pytest.mark.asyncio
+    async def test_set_advanced_cookie(self, app, router, port):
         class MainRouting(Routing):
             @get('/')
             async def index(self):
@@ -118,13 +131,15 @@ class TestAddCustomResponse:
         router.add(MainRouting)
         app.use(router)
 
-        res = TestClient(app).get('/')
-        assert res.cookies.get('Coo', None).value == 'Content'
+        async with TestClient(app, port) as client:
+            res = await client.get('/')
+            assert res.cookies.get('Coo', None).value == 'Content'
 
 
 class TestGetRoutingInformation:
 
-    def test_get_from_query(self, app, router):
+    @pytest.mark.asyncio
+    async def test_get_from_query(self, app, router, port):
 
         class MainRouting(Routing):
             @get('/')
@@ -134,13 +149,15 @@ class TestGetRoutingInformation:
         router.add(MainRouting)
         app.use(router)
 
-        res = TestClient(app).get('/')
-        assert res.text == ''
+        async with TestClient(app, port) as client:
+            res = await client.get('/')
+            assert res.text == ''
 
-        res = TestClient(app).get('/?hello=world')
-        assert res.text == 'world'
+            res = await client.get('/?hello=world')
+            assert res.text == 'world'
 
-    def test_get_from_form(self, app, router):
+    @pytest.mark.asyncio
+    async def test_get_from_form(self, app, router, port):
 
         class MainRouting(Routing):
             @post('/')
@@ -152,13 +169,15 @@ class TestGetRoutingInformation:
         router.add(MainRouting)
         app.use(router)
 
-        res = TestClient(app).post('/')
-        assert res.text == ''
+        async with TestClient(app, port) as client:
+            res = await client.post('/')
+            assert res.text == ''
 
-        res = TestClient(app).post('/', data={'hello': 'world'})
-        assert res.text == 'world'
+            res = await client.post('/', data={'hello': 'world'})
+            assert res.text == 'world'
 
-    def test_get_from_header(self, app, router):
+    @pytest.mark.asyncio
+    async def test_get_from_header(self, app, router, port):
 
         class MainRouting(Routing):
 
@@ -169,11 +188,13 @@ class TestGetRoutingInformation:
         router.add(MainRouting)
         app.use(router)
 
-        res = TestClient(app).get('/', headers={'custom-header': 'hello world'})
+        async with TestClient(app, port) as client:
+            res = await client.get('/', headers={'custom-header': 'hello world'})
 
-        assert res.text == 'hello world'
+            assert res.text == 'hello world'
 
-    def test_get_from_cookie(self, app, router):
+    @pytest.mark.asyncio
+    async def test_get_from_cookie(self, app, router, port):
 
         class MainRouting(Routing):
             @get('/')
@@ -183,11 +204,13 @@ class TestGetRoutingInformation:
         router.add(MainRouting)
         app.use(router)
 
-        res = TestClient(app).get('/', cookies={'custom-cookie': 'hello world', 'append': 'more'})
+        async with TestClient(app, port) as client:
+            res = await client.get('/', cookies={'custom-cookie': 'hello world', 'append': 'more'})
 
-        assert res.text == '"hello world"'
+            assert res.text == '"hello world"'
 
-    def test_get_ip(self, app, router):
+    @pytest.mark.asyncio
+    async def test_get_ip(self, app, router, port):
 
         class MainRouting(Routing):
             @get('/')
@@ -197,15 +220,16 @@ class TestGetRoutingInformation:
         router.add(MainRouting)
         app.use(router)
 
-        res = TestClient(app).get('/')
-        assert res.text == '127.0.0.1'
+        async with TestClient(app, port) as client:
+            res = await client.get('/')
+            assert res.text == '127.0.0.1'
 
-    def test_json(self, app, router):
+    @pytest.mark.asyncio
+    async def test_json(self, app, router, port):
 
         class MainRouting(Routing):
             @post('/')
             async def index(self):
-                print(self.request.form)
                 hello = self.request.form.get('hello', None)
                 if hello:
                     return hello
@@ -213,8 +237,9 @@ class TestGetRoutingInformation:
         router.add(MainRouting)
         app.use(router)
 
-        res = TestClient(app).post('/')
-        assert res.text == ''
+        async with TestClient(app, port) as client:
+            res = await client.post('/')
+            assert res.text == ''
 
-        res = TestClient(app).post('/', json={'hello': 'world'})
-        assert res.text == 'world'
+            res = await client.post('/', json={'hello': 'world'})
+            assert res.text == 'world'

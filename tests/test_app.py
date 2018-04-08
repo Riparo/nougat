@@ -1,11 +1,14 @@
-from nougat.router import Routing, get, post, put, patch, delete
+from nougat import *
+from nougat.router import *
 from nougat.test_client import TestClient
 from aiohttp import FormData
+import pytest
 
 
 class TestBasicApplication:
 
-    def test_get(self, app, router):
+    @pytest.mark.asyncio
+    async def test_get(self, app, router, port):
 
         class Basic(Routing):
 
@@ -15,11 +18,12 @@ class TestBasicApplication:
 
         router.add(Basic)
         app.use(router)
+        async with TestClient(app, port) as client:
+            res = await client.get('/')
+            assert res.text == 'hello world'
 
-        res = TestClient(app).get('/')
-        assert res.text == 'hello world'
-
-    def test_post(self, app, router):
+    @pytest.mark.asyncio
+    async def test_post(self, app, router, port):
 
         class Basic(Routing):
             @post('/')
@@ -28,11 +32,12 @@ class TestBasicApplication:
 
         router.add(Basic)
         app.use(router)
+        async with TestClient(app, port) as client:
+            res = await client.post('/')
+            assert res.text == 'post method'
 
-        res = TestClient(app).post('/')
-        assert res.text == 'post method'
-
-    def test_put(self, app, router):
+    @pytest.mark.asyncio
+    async def test_put(self, app, router, port):
 
         class Basic(Routing):
             @put('/')
@@ -42,10 +47,12 @@ class TestBasicApplication:
         router.add(Basic)
         app.use(router)
 
-        res = TestClient(app).put('/')
-        assert res.text == 'put method'
+        async with TestClient(app, port) as client:
+            res = await client.put('/')
+            assert res.text == 'put method'
 
-    def test_patch(self, app, router):
+    @pytest.mark.asyncio
+    async def test_patch(self, app, router, port):
 
         class Basic(Routing):
             @patch('/')
@@ -55,10 +62,12 @@ class TestBasicApplication:
         router.add(Basic)
         app.use(router)
 
-        res = TestClient(app).patch('/')
-        assert res.text == 'patch method'
+        async with TestClient(app, port) as client:
+            res = await client.patch('/')
+            assert res.text == 'patch method'
 
-    def test_delete(self, app, router):
+    @pytest.mark.asyncio
+    async def test_delete(self, app, router, port):
 
         class Basic(Routing):
             @delete('/')
@@ -68,13 +77,15 @@ class TestBasicApplication:
         router.add(Basic)
         app.use(router)
 
-        res = TestClient(app).delete('/')
-        assert res.text == 'delete method'
+        async with TestClient(app, port) as client:
+            res = await client.delete('/')
+            assert res.text == 'delete method'
 
 
 class TestRouter:
 
-    def test_static(self, app, router):
+    @pytest.mark.asyncio
+    async def test_static(self, app, router, port):
 
         class MainRouting(Routing):
 
@@ -85,13 +96,15 @@ class TestRouter:
         router.add(MainRouting)
         app.use(router)
 
-        res = TestClient(app).get('/static')
-        assert res.text == 'static route'
+        async with TestClient(app, port) as client:
+            res = await client.get('/static')
+            assert res.text == 'static route'
 
-        res = TestClient(app).get('/')
-        assert res.status == 404
+            res = await client.get('/')
+            assert res.status == 404
 
-    def test_simple_type(self, app, router):
+    @pytest.mark.asyncio
+    async def test_simple_type(self, app, router, port):
 
         class MainRouting(Routing):
 
@@ -102,20 +115,22 @@ class TestRouter:
         router.add(MainRouting)
         app.use(router)
 
-        res = TestClient(app).get('/article/')
-        assert res.status == 404
-        assert res.text == ''
+        async with TestClient(app, port) as client:
+            res = await client.get('/article/')
+            assert res.status == 404
+            assert res.text == ''
 
-        res = TestClient(app).get('/article/123')
-        assert res.text == 'id: 123'
+            res = await client.get('/article/123')
+            assert res.text == 'id: 123'
 
-        res = TestClient(app).get('/article/word')
-        assert res.text == 'id: word'
+            res = await client.get('/article/word')
+            assert res.text == 'id: word'
 
-        res = TestClient(app).get('/article/path/123')
-        assert res.text == ''
+            res = await client.get('/article/path/123')
+            assert res.text == ''
 
-    def test_unnamed_regex(self, app, router):
+    @pytest.mark.asyncio
+    async def test_unnamed_regex(self, app, router, port):
 
         class MainRouting(Routing):
             @get('/article/[0-9]+')
@@ -125,19 +140,21 @@ class TestRouter:
         router.add(MainRouting)
         app.use(router)
 
-        res = TestClient(app).get('/article/')
-        assert res.text == ''
+        async with TestClient(app, port) as client:
+            res = await client.get('/article/')
+            assert res.text == ''
 
-        res = TestClient(app).get('/article/123')
-        assert res.text == 'hit'
+            res = await client.get('/article/123')
+            assert res.text == 'hit'
 
-        res = TestClient(app).get('/article/word')
-        assert res.text == ''
+            res = await client.get('/article/word')
+            assert res.text == ''
 
-        res = TestClient(app).get('/article/path/123')
-        assert res.text == ''
+            res = await client.get('/article/path/123')
+            assert res.text == ''
 
-    def test_named_regex(self, app, router):
+    @pytest.mark.asyncio
+    async def test_named_regex(self, app, router, port):
 
         class MainRouting(Routing):
             @get('/article/:id<[0-9]+>')
@@ -147,20 +164,21 @@ class TestRouter:
         router.add(MainRouting)
         app.use(router)
 
-        res = TestClient(app).get('/article/')
-        assert res.text == ''
+        async with TestClient(app, port) as client:
+            res = await client.get('/article/')
+            assert res.text == ''
 
-        res = TestClient(app).get('/article/123')
-        assert res.text == '123'
+            res = await client.get('/article/123')
+            assert res.text == '123'
 
-        res = TestClient(app).get('/article/word')
-        assert res.text == ''
+            res = await client.get('/article/word')
+            assert res.text == ''
 
-        res = TestClient(app).get('/article/path/123')
-        assert res.text == ''
+            res = await client.get('/article/path/123')
+            assert res.text == ''
 
-    def test_form_data_with_multipart(self, app, router):
-
+    @pytest.mark.asyncio
+    async def tes_form_data_with_multipart(self, app, router, port):
         class MainRouting(Routing):
 
             @post('/')
@@ -177,13 +195,14 @@ class TestRouter:
                        filename='file.file',
                        content_type='image/img')
 
-        res = TestClient(app).post('/', data=data)
-        assert res.text == 'file.file'
-
+        async with TestClient(app, port) as client:
+            res = await client.post('/', data=data)
+            assert res.text == 'file.file'
 
 class TestMiddleware:
 
-    def test_basic(self, app, router):
+    @pytest.mark.asyncio
+    async def test_basic(self, app, router, port):
 
         async def middleware(req, res, next):
 
@@ -201,6 +220,7 @@ class TestMiddleware:
         router.add(MainRouting)
         app.use(router)
 
-        res = TestClient(app).get('/')
+        async with TestClient(app, port) as client:
+            res = await client.get('/')
 
-        assert res.text == 'hello'
+            assert res.text == 'hello'

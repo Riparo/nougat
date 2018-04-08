@@ -1,0 +1,1 @@
+from nougat.asgi.serve import serve
