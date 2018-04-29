@@ -6,7 +6,7 @@ install:
 - pipenv sync
 - pip install .
 script:
-- pipenv run python -m pytest --cov=nougat tests
+- pipenv run python -m pytest --cov=_nougat tests
 - pipenv run codecov
 deploy:
   provider: pypi

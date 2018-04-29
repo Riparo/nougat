@@ -1,70 +1,78 @@
-import logging
-from functools import partial
-from nougat.asgi import serve
-from nougat.asgi.httpstatus import STATUS_CODES
-from nougat.exceptions import *
-from nougat.utils import is_middleware, empty
-from nougat.config import Config
-from nougat.logger import get_logger
-from nougat.context import Request, Response
 
-from typing import List, Callable, Dict
+from typing import Callable, List, Dict, Awaitable, Tuple
+import inspect
 import asyncio
+from nougat.asgi import serve
+from nougat.config import Config
+from nougat.utils import is_middleware, empty, map_context_to_middleware
+from nougat.context import Request, Response
+from nougat.exceptions import HttpException, UnknownSignalException
 
 
-__all__ = ['Nougat']
+MiddlewareType = Callable[..., Awaitable[None]]
+SignalType = Callable[['Nougat'], Awaitable[None]]
 
 
-class Nougat(object):
+ALLOWED_SIGNALS = ['before_start', 'after_start']
 
-    # __slots__ = ['name', 'config', 'middleware', 'debug', 'start_server']
 
-    def __init__(self, name: str ='Nougat APP') -> None:
+class Nougat:
 
-        self.name: str = name
+    def __init__(self, name: str ='Nougat') -> None:
 
-        self.config: 'Config' = Config()
-        self.middleware: List[Callable] = []
+        self.app = name
+        self.server = None
+
+        self.config = Config()
+
+        self.middleware: List[MiddlewareType] = []
+        self.signals: Dict[str, List[SignalType]] = {}
 
         self.debug: bool = False
 
-        self.port: int = None
-        self.log = get_logger()
+        for signal in ALLOWED_SIGNALS:
+            self.signals[signal] = []
 
-    def use(self, middleware: Callable):
+    def use(self, *middleware: MiddlewareType) -> None:
         """
         Register Middleware
         :param middleware: The Middleware Function
         """
+        for m in middleware:
+            if is_middleware(m):
+                self.middleware.append(m)
 
-        if is_middleware(middleware):
-            self.middleware.append(middleware)
-
-    async def handler(self, request: Dict):
+    async def handler(self, request: Request) -> Tuple[int, str, List[Tuple[str, str]], bytes]:
         """
         The handler handling each request
         :param request: the Request instance
         :return: The Response instance
         """
-        request = Request.create_from_dict(self, request)
         response: 'Response' = Response()
 
         handler: Callable = empty
         chain_reverse = self.middleware[::-1]
         for middleware in chain_reverse:
-                handler = partial(middleware, req=request, res=response, next=handler)
+            handler = map_context_to_middleware(middleware, self, request, response, handler)
 
         try:
-
             await handler()
 
         except HttpException as e:
-            response.status = e.status
+            response.code = e.code
             response.content = e.body
 
-        response.output_generator()
+        return response.code, response.status, response.header_as_list, response.output
 
-        return response.status, STATUS_CODES.get(response.status, ''), response.header_as_list, response.output
+    def signal(self, name: str):
+
+        if name not in ALLOWED_SIGNALS:
+            raise UnknownSignalException(name)
+
+        def add_signal_handler(func: SignalType):
+            self.signals[name].append(func)
+
+        return add_signal_handler
 
     def run(self, host: str="localhost", port: int=8000, debug: bool=False):
         """
@@ -73,8 +81,6 @@ class Nougat(object):
         :param port: The listening port
         :param debug: whether it is in debug mod or not
         """
-        if debug:
-            print("Nougat is listening on http://{}:{}\n".format(host, port))
         self.debug = debug
         loop = asyncio.get_event_loop()
 
@@ -86,5 +92,20 @@ class Nougat(object):
 
     async def start_server(self, host: str, port: int=8000):
 
-        self.port = port
-        return await serve(self.handler, None, host, port)
+        # active before_start signal
+
+        for signal_func in self.signals['before_start']:
+            if inspect.iscoroutinefunction(signal_func):
+                await signal_func(self)
+            else:
+                signal_func(self)
+
+        self.server = await serve(self.handler, None, host, port)
+
+        # active after_start signal
+
+        for signal_func in self.signals['after_start']:
+            if inspect.iscoroutinefunction(signal_func):
+                await signal_func(self)
+            else:
+                signal_func(self)
