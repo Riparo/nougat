@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 from codecs import open
 from os import path
 
-__version__ = '0.2.5'
+__version__ = '0.3.0'
 
 here = path.abspath(path.dirname(__file__))
 
@@ -32,7 +32,7 @@ setup(
 
     keywords='web framework async',
 
-    packages=find_packages(exclude=['docs', 'demo', 'tests*']),
+    packages=find_packages(exclude=['docs', 'demos', 'tests*']),
     include_package_data=True,
     install_requires=[
         'aiohttp',
