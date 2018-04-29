@@ -1,37 +1,29 @@
+from typing import Dict, List, Tuple, Optional
+
 
 class Response:
 
-    def __init__(self, status: int=200):
+    def __init__(self, code: int=200, status: Optional[str]=None):
 
         self.__version = '1.1'
-        self.status = status
+        self.code: int = code
+        self.status: str = status
 
-        self.content = ''
-        self.type = 'text/html'
-        self.charset = 'utf-8'
+        self.content: str = ''
+        self.type: str = 'text/html'
+        self.charset: str = 'utf-8'
 
-        self.headers = {}
-        self.__body = None
+        self.headers: Dict[str, str] = {}
+        self.cookies: Dict[str, str] = {}
 
     @property
-    def output(self):
+    def output(self) -> bytes:
         """
-        output the http payload
+        encode content into target charset
         """
-        return self.__body.encode(self.charset)
+        return self.content.encode(self.charset)
 
-    def output_generator(self):
-        """
-        generate the http response headers and body
-        if output method is called without calling it, the response is always None
-        :return:
-        """
-
-        self.__body = self.content or ''
-        self.set_header('Content-Type', "{};charset={}".format(self.type, self.charset))
-        self.set_header('Content-Length', '{}'.format(len(self.__body.encode(self.charset))))
-
-    def set_header(self, key, value):
+    def set_header(self, key: str, value: str) -> None:
         """
         set response header
         :param key: the key of header
@@ -39,8 +31,15 @@ class Response:
         """
         self.headers[key] = value
 
-    def set_cookies(self, name, value, expires=None, domain=None, path=None, secure=False, http_only=False,
-                    same_site=None):
+    def set_cookies(self,
+                    name: str,
+                    value: str,
+                    expires: Optional[int]=None,
+                    domain: Optional[str]=None,
+                    path: Optional[str]=None,
+                    secure: bool=False,
+                    http_only: bool=False,
+                    same_site: Optional[str]=None) -> None:
         """
 
         :param name: cookies name
@@ -54,23 +53,34 @@ class Response:
         :return:
         """
 
-        header_value = "{}={}".format(name, value)
+        cookie: str = value
 
         if expires:
-            header_value = "{}; Max-Age={}".format(header_value, expires)
+            cookie = "{}; Max-Age={}".format(cookie, expires)
         if domain:
-            header_value = "{}; Domain={}".format(header_value, domain)
+            cookie = "{}; Domain={}".format(cookie, domain)
         if path:
-            header_value = "{}; Path={}".format(header_value, path)
+            cookie = "{}; Path={}".format(cookie, path)
         if secure:
-            header_value = "{}; Secure".format(header_value)
+            cookie = "{}; Secure".format(cookie)
         if http_only:
-            header_value = "{}; HttpOnly".format(header_value)
+            cookie = "{}; HttpOnly".format(cookie)
         if same_site:
-            header_value = "{}; SameSite={}".format(header_value, same_site)
+            cookie = "{}; SameSite={}".format(cookie, same_site)
 
-        self.set_header("Set-Cookie", header_value)
+        self.cookies[name] = cookie
 
     @property
-    def header_as_list(self):
-        return [(key, value) for key, value in self.headers.items()]
+    def header_as_list(self) -> List[Tuple[str, str]]:
+
+        _headers: List[Tuple[str, str]] = list()
+
+        _headers.append(('Content-Type', "{};charset={}".format(self.type, self.charset)))
+        _headers.append(('Content-Length', str(len(self.output))))
+
+        for key, value in self.headers.items():
+            _headers.append((key, value))
+        for key, value in self.cookies.items():
+            _headers.append(('Set-Cookie', '{}={}'.format(key, value)))
+
+        return _headers

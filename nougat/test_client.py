@@ -1,6 +1,5 @@
 import aiohttp
 from yarl import URL
-import asyncio
 
 __all__ = ['TestClient']
 
@@ -9,17 +8,16 @@ class TestClient:
 
     def __init__(self, app, port: int):
         self.app = app
-        self.server = None
         self.port = port
 
     async def __aenter__(self):
 
-        self.server = await self.app.start_server('127.0.0.1', self.port)
+        await self.app.start_server('127.0.0.1', self.port)
         return self
 
     async def __aexit__(self, exc_type, exc, tb):
-        self.server.close()
-        await self.server.wait_closed()
+        self.app.server.close()
+        await self.app.server.wait_closed()
 
     async def __request(self, method, url, cookies=None, *args, **kwargs):
 
