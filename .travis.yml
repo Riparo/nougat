@@ -3,10 +3,11 @@ python:
 - '3.6'
 install:
 - pip install pipenv
-- pipenv sync
-- pip install .
+- pipenv install
+- pipenv install --dev
+- pipenv install -e .
 script:
-- pipenv run python -m pytest --cov=_nougat tests
+- pipenv run python -m pytest --cov=nougat tests
 - pipenv run codecov
 deploy:
   provider: pypi
