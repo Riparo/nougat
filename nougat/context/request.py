@@ -39,7 +39,12 @@ class Request:
 
     @cached_property
     def cookies(self):
-        return SimpleCookie(self.headers.get('Cookies', ''))
+        _cookies = {}
+        cookies = SimpleCookie(self.headers.get('Cookie', ''))
+        for cookie in cookies.values():
+            _cookies[cookie.key] = cookie.value
+
+        return _cookies
 
     def __body_format(self, body):
         """
