@@ -112,6 +112,22 @@ class TestMiddleware:
             app.use(m)
 
     @pytest.mark.asyncio
+    async def test_middleware_can_be_async_call(self, app: Nougat):
+        class M:
+
+            async def __call__(self):
+                pass
+
+        class MiddlewareWithoutAsyncCall:
+
+            def __call__(self):
+                pass
+        app.use(M())
+        with pytest.raises(UnknownMiddlewareException,
+                           match="Middleware MiddlewareWithoutAsyncCall should be async function"):
+            app.use(MiddlewareWithoutAsyncCall())
+
+    @pytest.mark.asyncio
     async def test_middleware_params_out_of_boundary(self, app: Nougat):
         with pytest.raises(UnknownMiddlewareException):
             async def m(app, res, req):
