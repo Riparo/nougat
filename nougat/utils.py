@@ -19,13 +19,21 @@ def is_middleware(func) -> bool:
     :return: Boolean
     """
 
-    if not inspect.iscoroutinefunction(func):
-        raise UnknownMiddlewareException("Middleware {} should be async function".format(func.__name__))
+    if inspect.isfunction(func):
+        _check = func
+        _name = func.__name__
+    else:
+        _check = func.__call__
+        _name = func.__class__.__name__
 
-    args = list(inspect.signature(func).parameters.keys())
+    if not inspect.iscoroutinefunction(_check):
+        raise UnknownMiddlewareException("Middleware {} should be async function".format(_name))
+
+    args = list(inspect.signature(_check).parameters.keys())
 
     if set(args) - MIDDLEWARE_PARAMETER_BOUNDARY:
-        raise UnknownMiddlewareException("Parameters of middleware {} must be in list ['app', 'request', 'response', 'next']".format(func.__name__))
+        raise UnknownMiddlewareException("Parameters of middleware {} "
+                                         "must be in list ['app', 'request', 'response', 'next']".format(_name))
 
     return True
 
