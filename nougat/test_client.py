@@ -16,8 +16,7 @@ class TestClient:
         return self
 
     async def __aexit__(self, exc_type, exc, tb):
-        self.app.server.close()
-        await self.app.server.wait_closed()
+        await self.app.close_server_async()
 
     async def __request(self, method, url, cookies=None, *args, **kwargs):
 

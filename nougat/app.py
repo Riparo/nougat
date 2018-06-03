@@ -1,17 +1,15 @@
 
-from typing import Callable, List, Dict, Awaitable, Tuple
-import inspect
+from typing import Callable, List, Awaitable, Tuple
 import asyncio
+from nougat.signal import Signal
 from nougat.asgi import serve
 from nougat.config import Config
 from nougat.utils import is_middleware, empty, map_context_to_middleware
 from nougat.context import Request, Response
-from nougat.exceptions import HttpException, UnknownSignalException
+from nougat.exceptions import HttpException
 
 
 MiddlewareType = Callable[..., Awaitable[None]]
-SignalType = Callable[['Nougat'], Awaitable[None]]
-
 
 ALLOWED_SIGNALS = ['before_start', 'after_start']
 
@@ -26,12 +24,11 @@ class Nougat:
         self.config = Config()
 
         self.middleware: List[MiddlewareType] = []
-        self.signals: Dict[str, List[SignalType]] = {}
+
+        self.signal_manager = Signal(self)
+        self.signal = self.signal_manager.listen
 
         self.debug: bool = False
-
-        for signal in ALLOWED_SIGNALS:
-            self.signals[signal] = []
 
     def use(self, *middleware: MiddlewareType) -> None:
         """
@@ -64,16 +61,6 @@ class Nougat:
 
         return response.code, response.status, response.header_as_list, response.output
 
-    def signal(self, name: str):
-
-        if name not in ALLOWED_SIGNALS:
-            raise UnknownSignalException(name)
-
-        def add_signal_handler(func: SignalType):
-            self.signals[name].append(func)
-
-        return add_signal_handler
-
     def run(self, host: str="localhost", port: int=8000, debug: bool=False):
         """
         start the http server
@@ -88,24 +75,22 @@ class Nougat:
             loop.run_until_complete(self.start_server(host, port))
             loop.run_forever()
         except KeyboardInterrupt:
+            loop.run_until_complete(self.signal_manager.activate('before_close'))
+            loop.run_until_complete(self.close_server_async())
+            loop.run_until_complete(self.signal_manager.activate('after_close'))
+            loop.run_until_complete(asyncio.gather(*asyncio.Task.all_tasks()))
             loop.close()
+
+    async def close_server_async(self):
+        self.server.close()
+        await self.server.wait_closed()
 
     async def start_server(self, host: str, port: int=8000):
 
         # active before_start signal
-
-        for signal_func in self.signals['before_start']:
-            if inspect.iscoroutinefunction(signal_func):
-                await signal_func(self)
-            else:
-                signal_func(self)
+        await self.signal_manager.activate('before_start')
 
         self.server = await serve(self.handler, None, host, port)
 
         # active after_start signal
-
-        for signal_func in self.signals['after_start']:
-            if inspect.iscoroutinefunction(signal_func):
-                await signal_func(self)
-            else:
-                signal_func(self)
+        await self.signal_manager.activate('after_start')

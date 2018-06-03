@@ -14,12 +14,3 @@ class UnknownMiddlewareException(Exception):
 
     def __str__(self):
         return self.err
-
-
-class UnknownSignalException(Exception):
-
-    def __init__(self, name: str):
-        self.name: str = name
-
-    def __str__(self):
-        return 'can not add signal {}'.format(self.name)
