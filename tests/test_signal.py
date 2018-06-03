@@ -1,8 +1,25 @@
 import pytest
 from nougat import Nougat, TestClient
-from nougat.exceptions import UnknownSignalException
+from nougat.signal import Signal
+
 
 class TestSignal:
+
+    @pytest.mark.asyncio
+    async def test_signal(self, app: Nougat,):
+        v = []
+
+        signal = Signal(app)
+
+        @signal.listen('add')
+        async def add(app):
+
+            v.append('1')
+
+        assert v == []
+
+        await signal.activate('add')
+        assert v == ['1']
 
     @pytest.mark.asyncio
     async def test_before_start_signal(self, app: Nougat, port: int):
@@ -14,9 +31,8 @@ class TestSignal:
             v.append('1')
 
         async with TestClient(app, port) as client:
-            pass
+            assert v == ['1']
 
-        assert v == ['1']
 
     @pytest.mark.asyncio
     async def test_after_start_signal(self, app: Nougat, port: int):
@@ -26,9 +42,10 @@ class TestSignal:
         @app.signal('after_start')
         async def test(app):
             v.append('1')
+            return v
 
         async with TestClient(app, port) as client:
-            pass
+            assert v == ['1']
 
         assert v == ['1']
 
@@ -45,7 +62,7 @@ class TestSignal:
             v.append('World')
 
         async with TestClient(app, port) as client:
-            pass
+            assert v == ['Hello', 'World']
 
         assert v == ['Hello', 'World']
 
@@ -58,13 +75,13 @@ class TestSignal:
             v.append('Hello')
 
         @app.signal('before_start')
-        async def test(app):
+        def test(app):
             v.append('World')
 
         async with TestClient(app, port) as client:
-            pass
+            assert set(v) == {'Hello', 'World'}
 
-        assert v == ['Hello', 'World']
+        assert set(v) == {'Hello', 'World'}
 
     @pytest.mark.asyncio
     async def test_sync_signal_sender(self, app: Nougat, port: int):
@@ -79,14 +96,6 @@ class TestSignal:
             v.append('World')
 
         async with TestClient(app, port) as client:
-            pass
+            assert v == ['Hello', 'World']
 
         assert v == ['Hello', 'World']
-
-    @pytest.mark.asyncio
-    async def test_unknown_signal(self, app: Nougat):
-        with pytest.raises(UnknownSignalException, match="can not add signal unknown"):
-
-            @app.signal('unknown')
-            def test(app):
-                pass
