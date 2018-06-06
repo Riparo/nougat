@@ -1,9 +1,9 @@
 .. Nougat documentation master file, created by
-   sphinx-quickstart on Tue Jun  5 00:44:07 2018.
+   sphinx-quickstart on Wed Jun  6 23:16:23 2018.
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-欢迎阅读 Nougat 文档
+Welcome to Nougat's documentation!
 ==================================
 
 .. toctree::
