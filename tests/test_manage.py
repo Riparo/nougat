@@ -1,5 +1,4 @@
 import pytest
-from nougat.manage import Manager
 import argparse
 
 
@@ -7,60 +6,73 @@ class TestManage:
 
     def test_bind_command(self, app):
 
-        manager = Manager(app)
-
         def test():
 
             return 'hello world'
 
-        manager.command(test)
+        app.manager.command(test)
 
-        assert manager.up('test') == 'hello world'
+        assert app.manager.up('test') == 'hello world'
 
     def test_bind_with_name(self, app):
-        manager = Manager(app)
 
         def with_name():
 
             return 'hello'
 
-        manager.command(with_name, name='hello')
+        app.manager.command(with_name, name='hello')
 
-        assert manager.up('hello') == 'hello'
+        assert app.manager.up('hello') == 'hello'
 
     def test_boolean_arg(self, app):
-        manager = Manager(app)
 
         def boolean(verbose=True):
             if verbose:
                 return 'verbose'
             return 'emm'
 
-        manager.command(boolean)
+        app.manager.command(boolean)
 
-        assert manager.up('boolean') == 'verbose'
-        assert manager.up('boolean', '--no-verbose') == 'emm'
+        assert app.manager.up('boolean') == 'verbose'
+        assert app.manager.up('boolean', '--no-verbose') == 'emm'
 
     def test_boolean_arg_with_false_default_value(self, app):
-        manager = Manager(app)
 
         def boolean(verbose=False):
             if verbose:
                 return 'verbose'
             return 'emm'
 
-        manager.command(boolean)
+        app.manager.command(boolean)
 
-        assert manager.up('boolean') == 'emm'
-        assert manager.up('boolean', '--verbose') == 'verbose'
+        assert app.manager.up('boolean') == 'emm'
+        assert app.manager.up('boolean', '--verbose') == 'verbose'
 
     def test_add_sub_arg(self, app):
-
-        manager = Manager(app)
 
         def hello(name):
             return 'hello {}'.format(name)
 
-        manager.command(hello)
+        app.manager.command(hello)
 
-        assert manager.up('hello', 'world') == 'hello world'
+        assert app.manager.up('hello', 'world') == 'hello world'
+
+    def test_extension_add_command(self, app):
+
+        class Extension:
+
+            def __init__(self, app=None):
+
+                if app:
+                    self.set_up(app)
+
+            def set_up(self, app):
+
+                app.manager.command(self.command, name="extension")
+
+            def command(self):
+                return 'hello'
+
+        e = Extension(app)
+
+        assert app.manager.up('extension') == 'hello'

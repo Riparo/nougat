@@ -1,5 +1,4 @@
 from nougat import Nougat
-from nougat.manage import Manager
 
 app = Nougat()
 
@@ -11,4 +10,4 @@ async def middleware(response):
 app.use(middleware)
 
 
-Manager(app).up()
+app.manager.up()

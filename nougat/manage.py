@@ -12,8 +12,6 @@ class Manager(object):
 
     ```python
     from nougat import Nougat
-    from nougat.manage import Manager
-
 
     app = Nougat()
 
@@ -24,7 +22,7 @@ class Manager(object):
 
     app.use(middleware)
 
-    Manager(app).up()
+    app.manager.up()
     ```
 
     then just run `python example.py run`, the server is starting.
