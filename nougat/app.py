@@ -3,6 +3,7 @@ from typing import Callable, List, Awaitable, Tuple
 import asyncio
 from nougat.signal import Signal
 from nougat.asgi import serve
+from nougat.manage import Manager
 from nougat.config import Config
 from nougat.utils import is_middleware, empty, map_context_to_middleware
 from nougat.context import Request, Response
@@ -27,6 +28,7 @@ class Nougat:
 
         self.signal_manager = Signal(self)
         self.signal = self.signal_manager.listen
+        self.manager = Manager(self)
 
         self.debug: bool = False
 
